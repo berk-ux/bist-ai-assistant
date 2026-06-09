@@ -3,7 +3,7 @@ import { Sparkles, ExternalLink, RefreshCw, Edit3 } from 'lucide-react';
 import PortfolioModal from '../components/PortfolioModal';
 import { AuthContext } from '../context/AuthContext';
 
-export default function Dashboard({ hasApiKey, apiKey }) {
+export default function Dashboard() {
   const [newsList, setNewsList] = useState([]);
   const [selectedNews, setSelectedNews] = useState(null);
   const [isLoadingNews, setIsLoadingNews] = useState(true);
@@ -117,37 +117,26 @@ export default function Dashboard({ hasApiKey, apiKey }) {
   }, [selectedNews]);
 
   const handleAnalyze = async () => {
-    if (!hasApiKey) {
-      alert("Lütfen yapay zeka analizini kullanmak için önce Ayarlar'dan API Anahtarınızı girin.");
-      return;
-    }
-    
     setIsAnalyzing(true);
     setAnalysis("");
     
     try {
-      const prompt = `Sen profesyonel bir Borsa İstanbul (BİST) analisti ve portföy yöneticisisin. Sana gönderdiğim haberi özellikle "${selectedNews.symbol}" hissesi açısından incele. 
-
-Bu haberin ${selectedNews.symbol} hissesi üzerinde kısa ve orta vadeli nasıl bir etki yaratacağını, yatırımcıların neye dikkat etmesi gerektiğini 2-3 cümlelik net, elit ve profesyonel bir dille özetle. Asla kesin yatırım tavsiyesi verme.
-
-Haber Başlığı: ${selectedNews.title}
-Haber Detayı: ${selectedNews.snippet}`;
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+      const response = await fetch('/api/ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
+          title: selectedNews.title,
+          snippet: selectedNews.snippet,
+          symbol: selectedNews.symbol
         })
       });
 
       const data = await response.json();
       
       if (data.error) {
-        setAnalysis("API Anahtarı geçersiz veya kotalar doldu: " + data.error.message);
+        setAnalysis("Hata: " + data.error);
       } else {
-        const text = data.candidates[0].content.parts[0].text;
-        setAnalysis(text);
+        setAnalysis(data.analysis);
       }
     } catch (err) {
       setAnalysis("Analiz yapılırken bir hata oluştu. İnternet bağlantınızı kontrol edin.");

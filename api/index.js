@@ -369,5 +369,63 @@ app.post('/api/portfolio/save', authenticateToken, async (req, res) => {
   }
 });
 
+// --- YAPAY ZEKA (AI) ENDPOINTLERI ---
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
+
+// 1. Haber Analizi
+app.post('/api/ai/analyze', authenticateToken, async (req, res) => {
+  if (!GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'Sunucu tarafında API Anahtarı eksik.' });
+  }
+
+  const { title, snippet, symbol } = req.body;
+  if (!title || !snippet) return res.status(400).json({ error: 'Haber başlığı ve detayı gerekli.' });
+
+  const prompt = `Sen profesyonel bir Borsa İstanbul (BİST) analisti ve portföy yöneticisisin. Sana gönderdiğim haberi özellikle "${symbol || 'BİST'}" hissesi/piyasası açısından incele. 
+Bu haberin kısa ve orta vadeli nasıl bir etki yaratacağını, yatırımcıların neye dikkat etmesi gerektiğini 2-3 cümlelik net, elit ve profesyonel bir dille özetle. Asla kesin yatırım tavsiyesi verme.
+
+Haber Başlığı: ${title}
+Haber Detayı: ${snippet}`;
+
+  try {
+    const response = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+
+    const analysis = response.data.candidates[0].content.parts[0].text;
+    res.json({ analysis });
+  } catch (err) {
+    console.error("AI Analyze Error:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Yapay zeka analizi yapılamadı.' });
+  }
+});
+
+// 2. Chatbot (Borsa/Finans sınırlandırmalı)
+app.post('/api/ai/chat', authenticateToken, async (req, res) => {
+  if (!GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'Sunucu tarafında API Anahtarı eksik.' });
+  }
+
+  const { messages } = req.body; // array of {role, parts: [{text}]}
+  if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: 'Geçersiz mesaj formatı.' });
+
+  const systemInstruction = "Sen sadece Borsa İstanbul, hisse senetleri, ekonomi, finans ve portföy yönetimi konularında hizmet veren elit ve profesyonel bir asistansın. Asla kesin yatırım tavsiyesi (al/sat/tut) verme. Ekonomi ve finans DIŞINDAKİ (yemek tarifi, kodlama, günlük sohbet vb.) hiçbir soruya cevap verme ve 'Ben yalnızca finans ve borsa konularında yardımcı olabilirim' de.";
+
+  try {
+    const response = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      system_instruction: { parts: [{ text: systemInstruction }] },
+      contents: messages
+    });
+
+    const reply = response.data.candidates[0].content.parts[0].text;
+    res.json({ reply });
+  } catch (err) {
+    console.error("AI Chat Error:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Yapay zeka yanıt veremedi.' });
+  }
+});
+
 // Vercel Serverless Function Export
 export default app;
