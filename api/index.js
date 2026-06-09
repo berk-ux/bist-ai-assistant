@@ -1,12 +1,15 @@
-const express = require('express');
-const cors = require('cors');
-const Parser = require('rss-parser');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('./database');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import Parser from 'rss-parser';
+import * as cheerio from 'cheerio';
+import axios from 'axios';
+import yahooFinance2 from 'yahoo-finance2';
+import db from './database.js';
 
+dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json()); // JSON parsing eklendi
@@ -200,8 +203,12 @@ app.get('/api/news/symbol/:symbol', async (req, res) => {
 });
 
 // Canlı Piyasa Verileri (Yahoo Finance)
-const { default: YahooFinance } = require('yahoo-finance2');
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+// (yahooFinance import ile gelmediyse manuel olarak oluşturulabilir. Ancak yahoo-finance2 direkt export default ile instance veriyor.)
+// Varsa import edilen üzerinden devam edeceğiz:
+const yahooFinance = yahooFinance2;
+if (yahooFinance.suppressNotices) {
+  yahooFinance.suppressNotices(['yahooSurvey']);
+}
 
 app.get('/api/market', async (req, res) => {
   try {
@@ -357,4 +364,4 @@ app.post('/api/portfolio/save', authenticateToken, async (req, res) => {
 });
 
 // Vercel Serverless Function Export
-module.exports = app;
+export default app;

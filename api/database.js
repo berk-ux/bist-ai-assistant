@@ -1,5 +1,7 @@
-require('dotenv').config();
-const { Pool } = require('pg');
+import dotenv from 'dotenv';
+dotenv.config();
+import pkg from 'pg';
+const { Pool } = pkg;
 
 // Use DATABASE_URL for Postgres, fallback to something empty to prevent crash
 const pool = new Pool({
@@ -36,4 +38,4 @@ const initDb = async () => {
 
 initDb();
 
-module.exports = pool;
+export default pool;
