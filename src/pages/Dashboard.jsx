@@ -123,7 +123,10 @@ export default function Dashboard() {
     try {
       const response = await fetch('/api/ai/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           title: selectedNews.title,
           snippet: selectedNews.snippet,

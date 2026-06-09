@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { MessageSquare, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 
 export default function AIChat() {
+  const { token } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: 'Merhaba! Ben BİST AI Finans Asistanıyım. Borsa, hisse senetleri veya yatırımlarla ilgili sormak istediğiniz bir şey var mı?' }
@@ -40,7 +42,10 @@ export default function AIChat() {
 
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ messages: chatHistory })
       });
 
