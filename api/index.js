@@ -8,6 +8,7 @@ import * as cheerio from 'cheerio';
 import axios from 'axios';
 import yahooFinance2 from 'yahoo-finance2';
 import db, { initDb } from './database.js';
+import BIST100_SYMBOLS from './bist100.js';
 
 dotenv.config();
 const app = express();
@@ -45,6 +46,13 @@ const companyMapping = {
 // Geliştirilmiş Symbol Bulucu
 const detectSymbol = (text) => {
   const upperText = text.toUpperCase();
+  // Önce 100 hisselik dev listede tam eşleşme ara
+  for (const sym of BIST100_SYMBOLS) {
+    // Sadece kelime olarak geçiyorsa veya direkt varsa
+    if (upperText.includes(sym)) return sym;
+  }
+  
+  // Bulunamazsa özel şirket takma adlarına (aliases) bak
   for (const [symbol, aliases] of Object.entries(companyMapping)) {
     if (aliases.some(alias => upperText.includes(alias))) return symbol;
   }
@@ -116,8 +124,7 @@ async function fetchArticleDetail(url, fallbackSnippet) {
 
 app.get('/api/news', async (req, res) => {
   try {
-    const symbols = ['ENPRA', 'ISCTR', 'MIATK', 'THYAO', 'TUPRS', 'SISE', 'ASELS', 'PPZ'];
-    const query = `(${symbols.join(' OR ')}) (KAP OR Bloomberg OR Foreks OR Investing)`;
+    const query = `"Borsa İstanbul" OR "BİST 100" OR "Hisse senedi" OR "KAP"`;
     const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=tr&gl=TR&ceid=TR:tr`;
     
     const feed = await parser.parseURL(url);
@@ -213,27 +220,28 @@ const yahooFinance = new yahooFinance2({ suppressNotices: ['yahooSurvey'] });
 
 app.get('/api/market', async (req, res) => {
   try {
-    // Portföyümüzdeki ana hisselerin Yahoo Finance kodları
-    const symbols = ['ENPRA.IS', 'ISCTR.IS', 'MIATK.IS', 'THYAO.IS', 'TUPRS.IS', 'SISE.IS', 'ASELS.IS', 'PPZ.IS'];
-    
-    const quotes = await Promise.all(symbols.map(async (sym) => {
-      try {
-        const quote = await yahooFinance.quote(sym);
-        return {
-          symbol: sym.replace('.IS', ''),
-          price: quote.regularMarketPrice ? quote.regularMarketPrice.toFixed(2) : '0.00',
-          change: quote.regularMarketChangePercent ? quote.regularMarketChangePercent.toFixed(2) : 0
-        };
-      } catch (err) {
-        // Hisse bulunamazsa veya hata verirse 0 dön
-        return { symbol: sym.replace('.IS', ''), price: '0.00', change: 0 };
-      }
-    }));
-    
+    const querySymbols = BIST100_SYMBOLS.map(s => s + '.IS');
+    let rawQuotes = [];
+    try {
+      // Yahoo'nun çoklu sembol sorgulamasını kullanarak 100 hisseyi tek seferde (batch) çekiyoruz.
+      rawQuotes = await yahooFinance.quote(querySymbols);
+    } catch(err) {
+      console.error('Yahoo Finance batch query hatası:', err);
+    }
+
+    const quotes = BIST100_SYMBOLS.map(sym => {
+      const quoteInfo = rawQuotes.find(r => r.symbol === sym + '.IS');
+      return {
+        symbol: sym,
+        price: (quoteInfo?.regularMarketPrice || 0).toFixed(2),
+        change: (quoteInfo?.regularMarketChangePercent || 0).toFixed(2)
+      };
+    });
+
     res.json(quotes);
   } catch (error) {
-    console.error('Piyasa verileri çekme hatası:', error);
-    res.status(500).json({ error: 'Piyasa verileri çekilemedi' });
+    console.error('Market veri hatası:', error);
+    res.status(500).json({ error: 'Piyasa verileri alınamadı' });
   }
 });
 

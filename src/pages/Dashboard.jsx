@@ -11,6 +11,9 @@ export default function Dashboard() {
   const [analysis, setAnalysis] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Yeni Özellik: Arama Filtresi
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Yeni Özellik: Seçilen hisseye özel diğer kaynakları gruplama
   const [groupedSources, setGroupedSources] = useState(null);
   const [isLoadingGrouped, setIsLoadingGrouped] = useState(false);
@@ -282,7 +285,19 @@ export default function Dashboard() {
 
       {/* Market Watch */}
       <section style={{ marginBottom: '3rem' }}>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Canlı Piyasa Fiyatları (Market Watch)</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Canlı Piyasa Fiyatları (BİST 100)</h3>
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="text" 
+              placeholder="Hisse Ara..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="glass-panel"
+              style={{ padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '200px', fontSize: '0.9rem' }}
+            />
+          </div>
+        </div>
         
         {isLoadingMarket ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
@@ -291,13 +306,16 @@ export default function Dashboard() {
              <div className="glass-panel animate-pulse" style={{ height: '80px' }}></div>
           </div>
         ) : (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-            gap: '1rem' 
-          }}>
-            {marketData.map((stock, idx) => {
-              const changeFloat = parseFloat(stock.change);
+          <div className="scrollable-market-watch">
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+              gap: '1rem' 
+            }}>
+              {marketData
+                .filter(stock => stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map((stock, idx) => {
+                  const changeFloat = parseFloat(stock.change);
               const isPositive = changeFloat >= 0;
               return (
                 <div key={idx} className="glass-panel hover-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
@@ -315,7 +333,8 @@ export default function Dashboard() {
                   </div>
                 </div>
               );
-            })}
+              })}
+            </div>
           </div>
         )}
       </section>
