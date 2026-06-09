@@ -356,6 +356,5 @@ app.post('/api/portfolio/save', authenticateToken, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`BİST AI Backend sunucusu çalışıyor: http://localhost:${PORT}`);
-});
+// Vercel Serverless Function Export
+module.exports = app;

@@ -25,7 +25,7 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, onSave, mar
 
     setIsFetchingHistorical(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/market/historical/${symbol}/${buyDate}`);
+      const response = await fetch(`/api/market/historical/${symbol}/${buyDate}`);
       const data = await response.json();
       
       if (data.error) {

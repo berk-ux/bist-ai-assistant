@@ -28,7 +28,7 @@ export default function Dashboard({ hasApiKey, apiKey }) {
   useEffect(() => {
     if (!token) return;
     
-    fetch('http://localhost:3000/api/portfolio', {
+    fetch('/api/portfolio', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -42,7 +42,7 @@ export default function Dashboard({ hasApiKey, apiKey }) {
 
   const savePortfolio = (newPortfolio) => {
     setMyPortfolio(newPortfolio);
-    fetch('http://localhost:3000/api/portfolio/save', {
+    fetch('/api/portfolio/save', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export default function Dashboard({ hasApiKey, apiKey }) {
   // Canlı Piyasa Fiyatlarını Çekme
   useEffect(() => {
     const fetchMarket = () => {
-      fetch('http://localhost:3000/api/market')
+      fetch('/api/market')
         .then(res => res.json())
         .then(data => {
           setMarketData(data);
@@ -75,7 +75,7 @@ export default function Dashboard({ hasApiKey, apiKey }) {
   // Arka plandan gerçek haberleri çekme (Ana Liste) ve Otomatik Yenileme
   useEffect(() => {
     const fetchNews = () => {
-      fetch('http://localhost:3000/api/news')
+      fetch('/api/news')
         .then(res => res.json())
         .then(data => {
           setNewsList(data);
@@ -103,7 +103,7 @@ export default function Dashboard({ hasApiKey, apiKey }) {
   useEffect(() => {
     if (selectedNews && selectedNews.symbol) {
       setIsLoadingGrouped(true);
-      fetch(`http://localhost:3000/api/news/symbol/${selectedNews.symbol}`)
+      fetch(`/api/news/symbol/${selectedNews.symbol}`)
         .then(res => res.json())
         .then(data => {
           setGroupedSources(data);
