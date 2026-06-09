@@ -407,7 +407,8 @@ app.post('/api/ai/analyze', authenticateToken, async (req, res) => {
   }
 
   const prompt = `Sen profesyonel bir Borsa İstanbul (BİST) analisti ve portföy yöneticisisin. Sana gönderdiğim haberi özellikle "${symbol || 'BİST'}" hissesi/piyasası açısından incele. 
-Bu haberin kısa ve orta vadeli nasıl bir etki yaratacağını, yatırımcıların neye dikkat etmesi gerektiğini 2-3 cümlelik net, elit ve profesyonel bir dille özetle. Asla kesin yatırım tavsiyesi verme.
+Bu haberin kısa ve orta vadeli nasıl bir etki yaratacağını, yatırımcıların neye dikkat etmesi gerektiğini 2-3 cümlelik net, elit ve profesyonel bir dille özetle. 
+Bütün analiz bittikten sonra, EN SONA yeni bir paragraf olarak mutlaka haberin hisse üzerindeki olası etkisini belirten net bir yapay zeka tahmini ekle (Örn: "🎯 Yapay Zeka Tahmini: Kısa vadede yükseliş beklentisi (Pozitif)", "🎯 Yapay Zeka Tahmini: Kısa vadede düşüş beklentisi (Negatif)" veya "🎯 Yapay Zeka Tahmini: Nötr"). Asla kesin al/sat tavsiyesi verme.
 
 Haber Başlığı: ${title}
 Haber Detayı: ${snippet}`;
