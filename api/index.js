@@ -386,6 +386,8 @@ const getFriendlyErrorMessage = (err) => {
 };
 
 // 1. Haber Analizi
+const analysisCache = new Map();
+
 app.post('/api/ai/analyze', authenticateToken, async (req, res) => {
   if (!GEMINI_API_KEY) {
     return res.status(500).json({ error: 'Sunucu tarafında API Anahtarı eksik.' });
@@ -393,6 +395,13 @@ app.post('/api/ai/analyze', authenticateToken, async (req, res) => {
 
   const { title, snippet, symbol } = req.body;
   if (!title || !snippet) return res.status(400).json({ error: 'Haber başlığı ve detayı gerekli.' });
+
+  // --- CACHE KONTROLÜ ---
+  const cacheKey = `${symbol || 'BİST'}_${title}`;
+  if (analysisCache.has(cacheKey)) {
+    console.log("Cache hit for:", cacheKey);
+    return res.json({ analysis: analysisCache.get(cacheKey) });
+  }
 
   const prompt = `Sen profesyonel bir Borsa İstanbul (BİST) analisti ve portföy yöneticisisin. Sana gönderdiğim haberi özellikle "${symbol || 'BİST'}" hissesi/piyasası açısından incele. 
 Bu haberin kısa ve orta vadeli nasıl bir etki yaratacağını, yatırımcıların neye dikkat etmesi gerektiğini 2-3 cümlelik net, elit ve profesyonel bir dille özetle. Asla kesin yatırım tavsiyesi verme.
@@ -406,6 +415,15 @@ Haber Detayı: ${snippet}`;
     });
 
     const analysis = response.data.candidates[0].content.parts[0].text;
+    
+    // Analizi hafızaya kaydet
+    analysisCache.set(cacheKey, analysis);
+    
+    // Cache'in çok büyümesini engellemek için (örn. 500 analizden sonra temizle)
+    if (analysisCache.size > 500) {
+      analysisCache.clear();
+    }
+
     res.json({ analysis });
   } catch (err) {
     console.error("AI Analyze Error:", err.response?.data || err.message);
