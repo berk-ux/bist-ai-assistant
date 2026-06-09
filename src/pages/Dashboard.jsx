@@ -1,7 +1,8 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ExternalLink, RefreshCw, Edit3 } from 'lucide-react';
+import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket } from 'lucide-react';
 import PortfolioModal from '../components/PortfolioModal';
+import IpoModal from '../components/IpoModal';
 import { AuthContext } from '../context/AuthContext';
 
 export default function Dashboard() {
@@ -26,6 +27,9 @@ export default function Dashboard() {
   // Yeni Özellik: Gerçek Portföy Yönetimi
   const [myPortfolio, setMyPortfolio] = useState([]);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
+
+  // Yeni Özellik: Halka Arzlar (IPO)
+  const [isIpoModalOpen, setIsIpoModalOpen] = useState(false);
 
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -300,6 +304,13 @@ export default function Dashboard() {
       <section style={{ marginBottom: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Takip Edilen Hisseler</h3>
+          <button 
+            onClick={() => setIsIpoModalOpen(true)}
+            className="btn btn-secondary" 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--status-up)', color: 'var(--status-up)' }}
+          >
+            <Rocket size={16} /> Yaklaşan Halka Arzlar
+          </button>
         </div>
         
         {isLoadingMarket ? (
@@ -579,6 +590,10 @@ export default function Dashboard() {
         marketData={marketData}
       />
 
+      <IpoModal 
+        isOpen={isIpoModalOpen} 
+        onClose={() => setIsIpoModalOpen(false)} 
+      />
     </div>
   );
 }

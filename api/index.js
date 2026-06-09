@@ -437,5 +437,63 @@ Haber Detayı: ${snippet}`;
 
 
 
+// Halka Arz (IPO) Çekme ve Ayrıştırma (Gerçek Zamanlı Haberlerden)
+app.get('/api/ipos', async (req, res) => {
+  try {
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent('"halka arz" (onay OR taslak OR "talep toplama") (SPK OR BİST)')}&hl=tr&gl=TR&ceid=TR:tr`;
+    const feed = await parser.parseURL(url);
+    const newsText = feed.items.slice(0, 15).map(item => item.title).join('\n');
+
+    const prompt = `Aşağıdaki güncel borsa haber başlıklarını incele ve Borsa İstanbul'da yakında halka arz olacak (veya SPK'dan yeni onay almış, talep toplayan) şirketleri bul. 
+Her biri için şirket adını (companyName), sektörünü (sector) ve halka arz fiyatını (price) çıkar. Fiyat yoksa "Belirsiz" yaz. Sektörü haberden anlaşılmıyorsa "Genel" yaz. Aynı şirketi iki kere yazma.
+SADECE aşağıdaki formatta geçerli bir JSON dizisi (array) dön. Hiçbir ekstra metin veya markdown işareti ekleme. 
+Örnek Format: [{"companyName": "X Lojistik A.Ş.", "sector": "Lojistik", "price": "24.50 ₺"}]
+
+Haber Başlıkları:
+${newsText}`;
+
+    const response = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+
+    let resultText = response.data.candidates[0].content.parts[0].text;
+    resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let ipos = [];
+    try {
+      ipos = JSON.parse(resultText);
+    } catch(e) {
+      console.error('JSON Parse Hatası:', e, resultText);
+    }
+    
+    if (ipos.length === 0) {
+      ipos = [{ companyName: "Şu an onaylı yeni halka arz bulunamadı.", sector: "-", price: "-" }];
+    }
+    
+    res.json(ipos);
+  } catch (err) {
+    console.error('IPO Fetch Error:', err);
+    res.json([{ companyName: "Sistem güncelleniyor, SPK bülteni bekleniyor.", sector: "Genel", price: "Belirsiz" }]);
+  }
+});
+
+// Halka Arz (IPO) Özel Yapay Zeka Beklenti Analizi
+app.post('/api/ai/ipo-analysis', async (req, res) => {
+  try {
+    const { companyName, sector, price } = req.body;
+    const prompt = `Sen profesyonel bir Borsa İstanbul analistisin. "${companyName}" (Sektör: ${sector}) şirketi ${price} fiyatıyla halka arz oluyor/oldu.
+Bu şirketin sektörel konumunu, halka arzının potansiyelini ve uzun vadeli beklentileri yorumla. Yatırımcıların nelere dikkat etmesi gerektiğini 2-3 cümlelik net, elit ve profesyonel bir dille özetle. Asla kesin al/sat tavsiyesi verme.`;
+
+    const response = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+
+    const analysis = response.data.candidates[0].content.parts[0].text;
+    res.json({ analysis });
+  } catch(err) {
+    res.status(500).json({ error: 'Analiz yapılamadı.' });
+  }
+});
+
 // Vercel Serverless Function Export
 export default app;
