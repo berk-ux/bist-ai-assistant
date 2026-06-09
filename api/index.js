@@ -367,7 +367,7 @@ app.post('/api/portfolio/save', authenticateToken, async (req, res) => {
 // --- YAPAY ZEKA (AI) ENDPOINTLERI ---
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
 
 const getFriendlyErrorMessage = (err) => {
   const errorMessage = err.response?.data?.error?.message || err.message || '';
