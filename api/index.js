@@ -209,12 +209,7 @@ app.get('/api/news/symbol/:symbol', async (req, res) => {
 });
 
 // Canlı Piyasa Verileri (Yahoo Finance)
-// (yahooFinance import ile gelmediyse manuel olarak oluşturulabilir. Ancak yahoo-finance2 direkt export default ile instance veriyor.)
-// Varsa import edilen üzerinden devam edeceğiz:
-const yahooFinance = yahooFinance2;
-if (yahooFinance.suppressNotices) {
-  yahooFinance.suppressNotices(['yahooSurvey']);
-}
+const yahooFinance = new yahooFinance2({ suppressNotices: ['yahooSurvey'] });
 
 app.get('/api/market', async (req, res) => {
   try {
