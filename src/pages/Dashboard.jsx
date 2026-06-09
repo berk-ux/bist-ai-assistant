@@ -191,12 +191,7 @@ export default function Dashboard() {
     <div className="animate-fade-in flex-col gap-6" style={{ paddingBottom: '4rem' }}>
       
       {/* Top Section - Exact Reference Style */}
-      <section style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '2fr 1fr 1fr', 
-        gap: '1rem', 
-        marginBottom: '2rem' 
-      }}>
+      <section className="grid-dashboard-top">
         {/* Card 1: Total Portfolio Value */}
         <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden', minHeight: '220px' }}>
           <div style={{ zIndex: 2, position: 'relative' }}>
@@ -329,10 +324,10 @@ export default function Dashboard() {
       <section style={{ height: '700px', display: 'flex', flexDirection: 'column' }}>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Haberler & Analizler</h3>
         
-        <div style={{ display: 'flex', flex: 1, gap: '2rem', minHeight: 0 }}>
+        <div className="split-view-container">
           
           {/* Left Column: Master List */}
-          <div style={{ width: '350px', display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', overscrollBehavior: 'contain', paddingRight: '0.5rem' }}>
+          <div className="split-view-list">
             {isLoadingNews ? (
               <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
                 <RefreshCw className="animate-spin" size={24} style={{ margin: '0 auto 1rem auto' }} />
@@ -380,7 +375,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right Column: Detail View */}
-          <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', overscrollBehavior: 'contain' }}>
+          <div className="glass-panel split-view-detail">
             {selectedNews ? (
               <div style={{ padding: '3rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                 
@@ -412,7 +407,7 @@ export default function Dashboard() {
                     {selectedNews.symbol} Hakkında Genel Görünüm
                   </h3>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                  <div className="grid-hub">
                     
                     {/* KAP Column */}
                     <div className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(255, 159, 10, 0.03)', borderColor: 'rgba(255, 159, 10, 0.15)' }}>
