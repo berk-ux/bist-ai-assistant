@@ -398,7 +398,8 @@ Haber Detayı: ${snippet}`;
     res.json({ analysis });
   } catch (err) {
     console.error("AI Analyze Error:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Yapay zeka analizi yapılamadı.' });
+    const errorMessage = err.response?.data?.error?.message || err.message;
+    res.status(500).json({ error: `Yapay zeka analizi yapılamadı. Detay: ${errorMessage}` });
   }
 });
 
@@ -423,7 +424,8 @@ app.post('/api/ai/chat', authenticateToken, async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error("AI Chat Error:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Yapay zeka yanıt veremedi.' });
+    const errorMessage = err.response?.data?.error?.message || err.message;
+    res.status(500).json({ error: `Yapay zeka yanıt veremedi. Detay: ${errorMessage}` });
   }
 });
 
