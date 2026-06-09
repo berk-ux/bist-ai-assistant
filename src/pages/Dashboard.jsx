@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, ExternalLink, RefreshCw, Edit3 } from 'lucide-react';
 import PortfolioModal from '../components/PortfolioModal';
 import { AuthContext } from '../context/AuthContext';
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
 
   const { token } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!token) return;
@@ -124,12 +126,13 @@ export default function Dashboard() {
     setAnalysis("");
     
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      // Ziyaretçi değil de üye ise token ekle
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const response = await fetch('/api/ai/analyze', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           title: selectedNews.title,
           snippet: selectedNews.snippet,
@@ -200,7 +203,17 @@ export default function Dashboard() {
           <div style={{ zIndex: 2, position: 'relative' }}>
             <div className="flex justify-between items-center" style={{ marginBottom: '0.25rem' }}>
               <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Gerçek Canlı Portföy</div>
-              <button onClick={() => setIsPortfolioModalOpen(true)} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <button 
+                onClick={() => {
+                  if (!token) {
+                    alert('Portföyünüzü ve fonlarınızı yönetmek için ücretsiz bir hesap oluşturmalı veya giriş yapmalısınız.');
+                    navigate('/auth');
+                    return;
+                  }
+                  setIsPortfolioModalOpen(true);
+                }} 
+                style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+              >
                 <Edit3 size={14} /> Düzenle
               </button>
             </div>

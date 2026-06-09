@@ -391,7 +391,7 @@ const getFriendlyErrorMessage = (err) => {
 // 1. Haber Analizi
 const analysisCache = new Map();
 
-app.post('/api/ai/analyze', authenticateToken, async (req, res) => {
+app.post('/api/ai/analyze', async (req, res) => {
   if (!GEMINI_API_KEY) {
     return res.status(500).json({ error: 'Sunucu tarafında API Anahtarı eksik.' });
   }

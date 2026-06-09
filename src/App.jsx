@@ -1,18 +1,13 @@
 import { useState, useContext } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { TrendingUp, LogOut, User } from 'lucide-react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { TrendingUp, LogOut, User, LogIn } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import AuthPage from './pages/AuthPage';
 import { AuthContext } from './context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
-  const { token } = useContext(AuthContext);
-  if (!token) return <Navigate to="/auth" />;
-  return children;
-};
-
 function App() {
   const { token, username, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const MainLayout = () => (
     <div className="app-container">
@@ -35,13 +30,21 @@ function App() {
           </div>
           
           <div className="flex items-center gap-4">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-color)', color: 'var(--accent-primary)' }}>
-              <User size={16} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{username}</span>
-            </div>
-            <button className="btn btn-secondary" style={{ color: 'var(--status-down)' }} onClick={logout}>
-              <LogOut size={18} /> Çıkış
-            </button>
+            {token ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-color)', color: 'var(--accent-primary)' }}>
+                  <User size={16} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{username}</span>
+                </div>
+                <button className="btn btn-secondary" style={{ color: 'var(--status-down)' }} onClick={logout}>
+                  <LogOut size={18} /> Çıkış
+                </button>
+              </>
+            ) : (
+              <button className="btn btn-primary" onClick={() => navigate('/auth')}>
+                <LogIn size={18} /> Kayıt Ol / Giriş Yap
+              </button>
+            )}
           </div>
         </header>
 
@@ -54,7 +57,7 @@ function App() {
   return (
     <Routes>
       <Route path="/auth" element={token ? <Navigate to="/" /> : <AuthPage />} />
-      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} />
+      <Route path="/" element={<MainLayout />} />
     </Routes>
   );
 }
