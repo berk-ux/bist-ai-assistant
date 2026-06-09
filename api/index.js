@@ -7,12 +7,18 @@ import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import yahooFinance2 from 'yahoo-finance2';
-import db from './database.js';
+import db, { initDb } from './database.js';
 
 dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json()); // JSON parsing eklendi
+
+// Veritabanının hazır olduğundan emin olan Middleware
+app.use(async (req, res, next) => {
+  await initDb();
+  next();
+});
 
 const JWT_SECRET = 'bist-ai-super-secret-key-2026';
 
