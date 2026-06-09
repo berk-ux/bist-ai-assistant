@@ -281,7 +281,7 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Bu kullanıcı adı zaten alınmış.' });
     }
     console.error(err);
-    res.status(500).json({ error: 'Kayıt olurken sunucu hatası.' });
+    res.status(500).json({ error: `Sunucu hatası: ${err.message}` });
   }
 });
 
@@ -302,7 +302,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ token, username: user.username });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Giriş yaparken sunucu hatası.' });
+    res.status(500).json({ error: `Giriş hatası: ${err.message}` });
   }
 });
 
