@@ -286,17 +286,7 @@ export default function Dashboard() {
       {/* Market Watch */}
       <section style={{ marginBottom: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Canlı Piyasa Fiyatları (BİST 100)</h3>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              placeholder="Hisse Ara..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="glass-panel"
-              style={{ padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '200px', fontSize: '0.9rem' }}
-            />
-          </div>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Takip Edilen Hisseler</h3>
         </div>
         
         {isLoadingMarket ? (
@@ -306,36 +296,85 @@ export default function Dashboard() {
              <div className="glass-panel animate-pulse" style={{ height: '80px' }}></div>
           </div>
         ) : (
-          <div className="scrollable-market-watch">
+          <>
+            {/* Öncelikli Hisseler (Her zaman üstte sabit) */}
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-              gap: '1rem' 
+              gap: '1rem',
+              marginBottom: '2rem'
             }}>
               {marketData
-                .filter(stock => stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()))
+                .filter(stock => ['ENPRA', 'ISCTR', 'MIATK', 'THYAO', 'TUPRS', 'SISE', 'ASELS', 'PPZ'].includes(stock.symbol))
                 .map((stock, idx) => {
                   const changeFloat = parseFloat(stock.change);
-              const isPositive = changeFloat >= 0;
-              return (
-                <div key={idx} className="glass-panel hover-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
-                  <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
-                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
-                      {stock.symbol.charAt(0)}
+                  const isPositive = changeFloat >= 0;
+                  return (
+                    <div key={`top-${idx}`} className="glass-panel hover-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
+                      <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
+                          {stock.symbol.charAt(0)}
+                        </div>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{stock.symbol}:</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>₺{stock.price}</span>
+                        <span className={isPositive ? 'text-up' : 'text-down'} style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                          ({isPositive ? '+' : ''}{stock.change}%)
+                        </span>
+                      </div>
                     </div>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{stock.symbol}:</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>₺{stock.price}</span>
-                    <span className={isPositive ? 'text-up' : 'text-down'} style={{ fontSize: '0.9rem', fontWeight: 500 }}>
-                      ({isPositive ? '+' : ''}{stock.change}%)
-                    </span>
-                  </div>
-                </div>
-              );
+                  );
               })}
             </div>
-          </div>
+
+            {/* Diğer BİST 100 Hisseleri */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', marginTop: '2rem' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Diğer BİST 100 Hisseleri</h3>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="text" 
+                  placeholder="Hisse Ara..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="glass-panel"
+                  style={{ padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '200px', fontSize: '0.9rem' }}
+                />
+              </div>
+            </div>
+
+            <div className="scrollable-market-watch">
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                gap: '1rem' 
+              }}>
+                {marketData
+                  .filter(stock => !['ENPRA', 'ISCTR', 'MIATK', 'THYAO', 'TUPRS', 'SISE', 'ASELS', 'PPZ'].includes(stock.symbol))
+                  .filter(stock => stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map((stock, idx) => {
+                    const changeFloat = parseFloat(stock.change);
+                    const isPositive = changeFloat >= 0;
+                    return (
+                      <div key={`other-${idx}`} className="glass-panel hover-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
+                        <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
+                          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
+                            {stock.symbol.charAt(0)}
+                          </div>
+                          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{stock.symbol}:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>₺{stock.price}</span>
+                          <span className={isPositive ? 'text-up' : 'text-down'} style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                            ({isPositive ? '+' : ''}{stock.change}%)
+                          </span>
+                        </div>
+                      </div>
+                    );
+                })}
+              </div>
+            </div>
+          </>
         )}
       </section>
 
