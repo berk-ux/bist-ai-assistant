@@ -9,7 +9,9 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-const initDb = async () => {
+let isInitialized = false;
+export const initDb = async () => {
+  if (isInitialized) return;
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -31,11 +33,10 @@ const initDb = async () => {
       );
     `);
     console.log("PostgreSQL tabloları başarıyla oluşturuldu/doğrulandı.");
+    isInitialized = true;
   } catch (err) {
     console.error("PostgreSQL tabloları oluşturulurken hata:", err);
   }
 };
-
-initDb();
 
 export default pool;
