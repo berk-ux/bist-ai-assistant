@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { TrendingUp, LogOut, User } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import AuthPage from './pages/AuthPage';
-import AIChat from './components/AIChat';
 import { AuthContext } from './context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
@@ -49,8 +48,6 @@ function App() {
         <Dashboard />
       </main>
 
-      {/* AIChat Component */}
-      <AIChat />
     </div>
   );
 

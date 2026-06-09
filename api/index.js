@@ -426,30 +426,7 @@ Haber Detayı: ${snippet}`;
   }
 });
 
-// 2. Chatbot (Borsa/Finans sınırlandırmalı)
-app.post('/api/ai/chat', authenticateToken, async (req, res) => {
-  if (!GEMINI_API_KEY) {
-    return res.status(500).json({ error: 'Sunucu tarafında API Anahtarı eksik.' });
-  }
 
-  const { messages } = req.body; // array of {role, parts: [{text}]}
-  if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: 'Geçersiz mesaj formatı.' });
-
-  const systemInstruction = "Sen sadece Borsa İstanbul, hisse senetleri, ekonomi, finans ve portföy yönetimi konularında hizmet veren elit ve profesyonel bir asistansın. Asla kesin yatırım tavsiyesi (al/sat/tut) verme. Ekonomi ve finans DIŞINDAKİ (yemek tarifi, kodlama, günlük sohbet vb.) hiçbir soruya cevap verme ve 'Ben yalnızca finans ve borsa konularında yardımcı olabilirim' de.";
-
-  try {
-    const response = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      system_instruction: { parts: [{ text: systemInstruction }] },
-      contents: messages
-    });
-
-    const reply = response.data.candidates[0].content.parts[0].text;
-    res.json({ reply });
-  } catch (err) {
-    console.error("AI Chat Error:", err.response?.data || err.message);
-    res.status(500).json({ error: getFriendlyErrorMessage(err) });
-  }
-});
 
 // Vercel Serverless Function Export
 export default app;
