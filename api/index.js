@@ -374,6 +374,17 @@ app.post('/api/portfolio/save', authenticateToken, async (req, res) => {
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
 
+const getFriendlyErrorMessage = (err) => {
+  const errorMessage = err.response?.data?.error?.message || err.message || '';
+  if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+    return 'Şu anda çok fazla kişi analiz istiyor. Google API kotalarımız geçici olarak doldu, lütfen 1 dakika sonra tekrar deneyin.';
+  }
+  if (errorMessage.includes('demand') || errorMessage.includes('503')) {
+    return 'Yapay zeka sunucularında (Google Gemini) anlık bir yoğunluk yaşanıyor. Lütfen birazdan tekrar sorun.';
+  }
+  return 'Yapay zeka bağlantısında anlık bir sorun oluştu, lütfen tekrar deneyin.';
+};
+
 // 1. Haber Analizi
 app.post('/api/ai/analyze', authenticateToken, async (req, res) => {
   if (!GEMINI_API_KEY) {
@@ -398,8 +409,7 @@ Haber Detayı: ${snippet}`;
     res.json({ analysis });
   } catch (err) {
     console.error("AI Analyze Error:", err.response?.data || err.message);
-    const errorMessage = err.response?.data?.error?.message || err.message;
-    res.status(500).json({ error: `Yapay zeka analizi yapılamadı. Detay: ${errorMessage}` });
+    res.status(500).json({ error: getFriendlyErrorMessage(err) });
   }
 });
 
@@ -424,8 +434,7 @@ app.post('/api/ai/chat', authenticateToken, async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error("AI Chat Error:", err.response?.data || err.message);
-    const errorMessage = err.response?.data?.error?.message || err.message;
-    res.status(500).json({ error: `Yapay zeka yanıt veremedi. Detay: ${errorMessage}` });
+    res.status(500).json({ error: getFriendlyErrorMessage(err) });
   }
 });
 
