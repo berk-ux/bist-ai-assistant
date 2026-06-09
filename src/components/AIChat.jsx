@@ -32,7 +32,6 @@ export default function AIChat() {
     setIsLoading(true);
 
     try {
-      // Chat geçmişini formatlayıp gönderiyoruz (sadece son 5 mesajı)
       const chatHistory = messages.slice(-5).map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.text }]
@@ -66,80 +65,188 @@ export default function AIChat() {
   return (
     <>
       {/* Yüzen Buton */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-white hover:scale-110 transition-transform z-40 ${isOpen ? 'hidden' : ''}`}
-      >
-        <MessageSquare size={24} />
-      </button>
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: 'var(--accent-gradient)',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            boxShadow: '0 4px 15px rgba(10, 132, 255, 0.4)',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <MessageSquare size={24} />
+        </button>
+      )}
 
       {/* Chat Penceresi */}
-      <div
-        className={`fixed bottom-6 right-6 w-[350px] max-w-[calc(100vw-32px)] h-[500px] max-h-[calc(100vh-100px)] bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl flex flex-col z-50 transition-all duration-300 transform origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-gray-900 rounded-t-2xl">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-500">
-              <Bot size={20} />
+      {isOpen && (
+        <div
+          className="glass-panel"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '350px',
+            maxWidth: 'calc(100vw - 32px)',
+            height: '500px',
+            maxHeight: 'calc(100vh - 100px)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 10000,
+            overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.8)'
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            borderBottom: '1px solid var(--border-color)',
+            background: 'var(--bg-secondary)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: 'rgba(10, 132, 255, 0.2)',
+                color: 'var(--accent-primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <Bot size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>BİST AI Asistan</h3>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--status-up)' }}>Çevrimiçi</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-white text-sm">BİST AI Asistan</h3>
-              <p className="text-xs text-green-400">Çevrimiçi</p>
-            </div>
+            <button 
+              onClick={() => setIsOpen(false)}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white transition-colors">
-            <X size={20} />
-          </button>
-        </div>
 
-        {/* Messages Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((msg, idx) => (
-            <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-blue-600/20 text-blue-500'}`}>
-                {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+          {/* Messages Body */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            background: 'var(--bg-primary)'
+          }}>
+            {messages.map((msg, idx) => (
+              <div key={idx} style={{
+                display: 'flex',
+                gap: '12px',
+                flexDirection: msg.role === 'user' ? 'row-reverse' : 'row'
+              }}>
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: msg.role === 'user' ? 'rgba(94, 92, 230, 0.2)' : 'rgba(10, 132, 255, 0.2)',
+                  color: msg.role === 'user' ? 'var(--accent-secondary)' : 'var(--accent-primary)'
+                }}>
+                  {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+                </div>
+                <div style={{
+                  padding: '12px',
+                  borderRadius: '16px',
+                  maxWidth: '75%',
+                  fontSize: '14px',
+                  background: msg.role === 'user' ? 'var(--accent-secondary)' : 'var(--bg-tertiary)',
+                  color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
+                  borderTopRightRadius: msg.role === 'user' ? '0' : '16px',
+                  borderTopLeftRadius: msg.role === 'user' ? '16px' : '0'
+                }}>
+                  {msg.text}
+                </div>
               </div>
-              <div className={`p-3 rounded-2xl max-w-[75%] text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-gray-800 text-gray-200 rounded-tl-none'}`}>
-                {msg.text}
+            ))}
+            {isLoading && (
+              <div style={{ display: 'flex', gap: '12px', flexDirection: 'row' }}>
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(10, 132, 255, 0.2)', color: 'var(--accent-primary)'
+                }}>
+                  <Bot size={16} />
+                </div>
+                <div style={{
+                  padding: '12px', borderRadius: '16px', borderTopLeftRadius: '0',
+                  background: 'var(--bg-tertiary)', color: 'var(--text-secondary)',
+                  display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px'
+                }}>
+                  <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+                  <span>Düşünüyor...</span>
+                </div>
               </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex gap-3 flex-row">
-              <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-blue-600/20 text-blue-500">
-                <Bot size={16} />
-              </div>
-              <div className="p-3 rounded-2xl bg-gray-800 text-gray-200 rounded-tl-none flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin text-blue-500" />
-                <span className="text-xs text-gray-400">Düşünüyor...</span>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-        {/* Input Form */}
-        <form onSubmit={handleSend} className="p-3 border-t border-gray-800 bg-gray-900 rounded-b-2xl">
-          <div className="relative flex items-center">
+          {/* Input Form */}
+          <form onSubmit={handleSend} style={{
+            padding: '12px',
+            borderTop: '1px solid var(--border-color)',
+            background: 'var(--bg-secondary)',
+            display: 'flex',
+            gap: '8px'
+          }}>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Finansal bir soru sorun..."
-              className="w-full bg-gray-800 border border-gray-700 rounded-full py-3 pl-4 pr-12 text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-500"
               disabled={isLoading}
+              style={{
+                flex: 1,
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '20px',
+                padding: '10px 16px',
+                color: 'var(--text-primary)',
+                fontSize: '14px',
+                outline: 'none'
+              }}
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="absolute right-2 w-8 h-8 flex items-center justify-center text-white bg-blue-600 rounded-full hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 transition-colors"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: (!input.trim() || isLoading) ? 'var(--bg-tertiary)' : 'var(--accent-primary)',
+                color: (!input.trim() || isLoading) ? 'var(--text-muted)' : '#fff',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: (!input.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s'
+              }}
             >
-              <Send size={14} />
+              <Send size={16} />
             </button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
     </>
   );
 }
