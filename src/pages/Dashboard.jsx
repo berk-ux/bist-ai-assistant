@@ -327,7 +327,6 @@ export default function Dashboard({ activeTab }) {
             <span className="text-up" style={{ fontWeight: 600 }}>+12.4%</span>
           </div>
         </div>
-        </div>
         
         {/* Detaylı Portföy Tablosu ve AI Analizi */}
         <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
