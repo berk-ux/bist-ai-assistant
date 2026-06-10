@@ -496,5 +496,21 @@ Bu şirketin sektörel konumunu, halka arzının potansiyelini ve uzun vadeli be
   }
 });
 
+// Yeni: Gerçek Zamanlı Yatırım Fonu Verisi Çekme
+app.get('/api/funds/:code', async (req, res) => {
+  try {
+    const code = req.params.code.toUpperCase();
+    const fund = new Fund(code);
+    const detail = await fund.detail;
+    if (!detail || !detail.price) {
+      return res.status(404).json({ error: 'Fon bulunamadı veya veri çekilemedi.' });
+    }
+    res.json(detail);
+  } catch (err) {
+    console.error('Fon çekme hatası:', err);
+    res.status(500).json({ error: 'Fon verileri alınamadı.' });
+  }
+});
+
 // Vercel Serverless Function Export
 export default app;
