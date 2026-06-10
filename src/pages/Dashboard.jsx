@@ -339,6 +339,7 @@ export default function Dashboard({ activeTab }) {
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
                     <th style={{ padding: '0.5rem' }}>Hisse</th>
+                    <th style={{ padding: '0.5rem' }}>Alış Tarihi</th>
                     <th style={{ padding: '0.5rem' }}>Miktar</th>
                     <th style={{ padding: '0.5rem' }}>Ort. Maliyet</th>
                     <th style={{ padding: '0.5rem' }}>Canlı Fiyat</th>
@@ -353,10 +354,15 @@ export default function Dashboard({ activeTab }) {
                     const plPct = ((currentPrice - item.buyPrice) / item.buyPrice) * 100;
                     const isUp = plVal >= 0;
                     
+                    const displayQuantity = Number.isInteger(item.quantity) 
+                      ? item.quantity 
+                      : parseFloat(item.quantity).toLocaleString('tr-TR', { maximumFractionDigits: 4 });
+                    
                     return (
                       <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500, color: '#fff' }}>{item.symbol}</td>
-                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{item.quantity} Lot</td>
+                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{item.buyDate || '-'}</td>
+                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{displayQuantity} Lot</td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>₺{item.buyPrice.toFixed(2)}</td>
                         <td style={{ padding: '0.75rem 0.5rem', color: '#fff' }}>₺{currentPrice.toFixed(2)}</td>
                         <td className={isUp ? 'text-up' : 'text-down'} style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 600 }}>
