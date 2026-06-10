@@ -4,6 +4,7 @@ import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket, AlertCircle } from 'l
 import PortfolioModal from '../components/PortfolioModal';
 import IpoView from '../components/IpoModal';
 import FundsView from '../components/FundsView';
+import StockDetailModal from '../components/StockDetailModal';
 import { AuthContext } from '../context/AuthContext';
 
 export default function Dashboard({ activeTab }) {
@@ -37,6 +38,10 @@ export default function Dashboard({ activeTab }) {
   // Yeni Özellik: Gerçek Portföy Yönetimi
   const [myPortfolio, setMyPortfolio] = useState([]);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
+
+  // Yeni Özellik: Hisse Detay & Grafik Modali
+  const [selectedStockForDetail, setSelectedStockForDetail] = useState(null);
+  const [isStockDetailOpen, setIsStockDetailOpen] = useState(false);
 
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -208,6 +213,11 @@ export default function Dashboard({ activeTab }) {
     } finally {
       setIsFetchingRecommendations(false);
     }
+  };
+
+  const handleStockClick = (symbol, currentPrice = '0.00', change = '0') => {
+    setSelectedStockForDetail({ symbol, price: currentPrice, change });
+    setIsStockDetailOpen(true);
   };
 
   // Dinamik Portföy Değeri Hesaplama (Gerçek Maliyet ve Canlı Fiyat Üzerinden)
@@ -384,7 +394,15 @@ export default function Dashboard({ activeTab }) {
                     
                     return (
                       <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                        <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500, color: '#fff' }}>{item.symbol}</td>
+                        <td 
+                          style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: 'var(--accent-primary)', cursor: 'pointer' }}
+                          onClick={() => {
+                            const marketItem = marketData.find(m => m.symbol === item.symbol);
+                            handleStockClick(item.symbol, marketItem ? marketItem.price : item.buyPrice.toFixed(2), marketItem ? marketItem.change : '0');
+                          }}
+                        >
+                          {item.symbol}
+                        </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{item.buyDate || '-'}</td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{displayQuantity} Lot</td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>₺{item.buyPrice.toFixed(2)}</td>
@@ -527,7 +545,12 @@ export default function Dashboard({ activeTab }) {
                   const changeFloat = parseFloat(stock.change);
                   const isPositive = changeFloat >= 0;
                   return (
-                    <div key={`top-${idx}`} className="glass-panel hover-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
+                    <div 
+                      key={`top-${idx}`} 
+                      className="glass-panel hover-card" 
+                      style={{ padding: '1.25rem', cursor: 'pointer' }}
+                      onClick={() => handleStockClick(stock.symbol, stock.price, stock.change)}
+                    >
                       <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
                         <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
                           {stock.symbol.charAt(0)}
@@ -573,7 +596,12 @@ export default function Dashboard({ activeTab }) {
                     const changeFloat = parseFloat(stock.change);
                     const isPositive = changeFloat >= 0;
                     return (
-                      <div key={`other-${idx}`} className="glass-panel hover-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
+                      <div 
+                        key={`other-${idx}`} 
+                        className="glass-panel hover-card" 
+                        style={{ padding: '1.25rem', cursor: 'pointer' }}
+                        onClick={() => handleStockClick(stock.symbol, stock.price, stock.change)}
+                      >
                         <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
                           <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
                             {stock.symbol.charAt(0)}
@@ -800,6 +828,19 @@ export default function Dashboard({ activeTab }) {
         initialData={myPortfolio}
         marketData={marketData}
       />
+
+      {selectedStockForDetail && (
+        <StockDetailModal
+          isOpen={isStockDetailOpen}
+          onClose={() => {
+            setIsStockDetailOpen(false);
+            setSelectedStockForDetail(null);
+          }}
+          symbol={selectedStockForDetail.symbol}
+          currentPrice={selectedStockForDetail.price}
+          change={selectedStockForDetail.change}
+        />
+      )}
 
     </div>
   );

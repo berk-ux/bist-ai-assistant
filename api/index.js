@@ -275,6 +275,40 @@ app.get('/api/market/historical/:symbol/:date', async (req, res) => {
   }
 });
 
+// Yeni: Hisse için Tarihsel Grafik Verisi Çekme (Aylık/Haftalık/Üç Aylık)
+app.get('/api/market/history/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    const days = parseInt(req.query.days) || 30; // Varsayılan 30 gün
+    const querySymbol = symbol.endsWith('.IS') ? symbol : `${symbol}.IS`;
+    
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days);
+    
+    const queryOptions = {
+      period1: startDate.toISOString().split('T')[0],
+      period2: endDate.toISOString().split('T')[0],
+      interval: '1d'
+    };
+
+    const result = await yahooFinance.historical(querySymbol, queryOptions);
+    
+    if (result && result.length > 0) {
+      const formatted = result.map(day => ({
+        date: new Date(day.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }),
+        price: parseFloat(day.close.toFixed(2))
+      }));
+      res.json(formatted);
+    } else {
+      res.status(404).json({ error: 'Geçmiş fiyat verisi bulunamadı.' });
+    }
+  } catch (error) {
+    console.error('Grafik geçmiş veri hatası:', error);
+    res.status(500).json({ error: 'Geçmiş fiyat verileri çekilemedi' });
+  }
+});
+
 // --- YENİ: AUTH & PORTFOLIO ROTASI (AŞAMA 7) ---
 
 // Kayıt Ol
