@@ -547,20 +547,20 @@ export default function Dashboard({ activeTab }) {
                   return (
                     <div 
                       key={`top-${idx}`} 
-                      className="glass-panel hover-card" 
-                      style={{ padding: '1.25rem', cursor: 'pointer' }}
+                      className={`stock-card ${isPositive ? 'up' : changeFloat < 0 ? 'down' : ''}`}
                       onClick={() => handleStockClick(stock.symbol, stock.price, stock.change)}
                     >
-                      <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
-                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
+                      <div className="flex justify-between items-center" style={{ width: '100%' }}>
+                        <span className="stock-symbol">{stock.symbol}</span>
+                        <div className={`stock-avatar ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
                           {stock.symbol.charAt(0)}
                         </div>
-                        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{stock.symbol}:</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>₺{stock.price}</span>
-                        <span className={isPositive ? 'text-up' : 'text-down'} style={{ fontSize: '0.9rem', fontWeight: 500 }}>
-                          ({isPositive ? '+' : ''}{stock.change}%)
+                      
+                      <div className="flex justify-between items-end" style={{ width: '100%', marginTop: '0.5rem' }}>
+                        <span className="stock-price">₺{stock.price}</span>
+                        <span className={`stock-change-badge ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
+                          {isPositive ? '▲' : changeFloat < 0 ? '▼' : '•'} {isPositive ? '+' : ''}{stock.change}%
                         </span>
                       </div>
                     </div>
@@ -598,20 +598,20 @@ export default function Dashboard({ activeTab }) {
                     return (
                       <div 
                         key={`other-${idx}`} 
-                        className="glass-panel hover-card" 
-                        style={{ padding: '1.25rem', cursor: 'pointer' }}
+                        className={`stock-card ${isPositive ? 'up' : changeFloat < 0 ? 'down' : ''}`}
                         onClick={() => handleStockClick(stock.symbol, stock.price, stock.change)}
                       >
-                        <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
-                          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
+                        <div className="flex justify-between items-center" style={{ width: '100%' }}>
+                          <span className="stock-symbol">{stock.symbol}</span>
+                          <div className={`stock-avatar ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
                             {stock.symbol.charAt(0)}
                           </div>
-                          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{stock.symbol}:</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>₺{stock.price}</span>
-                          <span className={isPositive ? 'text-up' : 'text-down'} style={{ fontSize: '0.9rem', fontWeight: 500 }}>
-                            ({isPositive ? '+' : ''}{stock.change}%)
+                        
+                        <div className="flex justify-between items-end" style={{ width: '100%', marginTop: '0.5rem' }}>
+                          <span className="stock-price">₺{stock.price}</span>
+                          <span className={`stock-change-badge ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
+                            {isPositive ? '▲' : changeFloat < 0 ? '▼' : '•'} {isPositive ? '+' : ''}{stock.change}%
                           </span>
                         </div>
                       </div>
