@@ -1005,6 +1005,7 @@ export default function Dashboard({ activeTab }) {
         isOpen={isPortfolioModalOpen} 
         onClose={() => setIsPortfolioModalOpen(false)} 
         onSave={savePortfolio}
+        portfolio={myPortfolio}
         initialData={myPortfolio}
         marketData={marketData}
       />

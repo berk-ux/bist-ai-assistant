@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 
-export default function PortfolioModal({ isOpen, onClose, portfolio, onSave, marketData = [] }) {
+export default function PortfolioModal({ isOpen, onClose, portfolio, initialData, onSave, marketData = [] }) {
   const [symbol, setSymbol] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -13,7 +13,13 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, onSave, mar
   const [isFetchingHistorical, setIsFetchingHistorical] = useState(false);
   
   // Create a local copy to edit before saving
-  const [localPortfolio, setLocalPortfolio] = useState(portfolio || []);
+  const [localPortfolio, setLocalPortfolio] = useState(portfolio || initialData || []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLocalPortfolio(portfolio || initialData || []);
+    }
+  }, [isOpen, portfolio, initialData]);
 
   if (!isOpen) return null;
 
