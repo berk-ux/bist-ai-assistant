@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket } from 'lucide-react';
+import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket, AlertCircle } from 'lucide-react';
 import PortfolioModal from '../components/PortfolioModal';
 import IpoView from '../components/IpoModal';
 import FundsView from '../components/FundsView';
