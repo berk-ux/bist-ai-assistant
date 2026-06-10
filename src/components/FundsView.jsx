@@ -70,6 +70,30 @@ export default function FundsView() {
     return "M0,90 Q40,85 80,75 T160,50 T240,30 T320,15 T400,0";
   };
 
+  // Geriye Dönük (7 Günlük) Kazanç Hesaplaması
+  const historyList = [];
+  if (myInvestment.amount > 0 && fundData?.daily_return) {
+    let currentBalance = myInvestment.amount;
+    const rate = fundData.daily_return / 100;
+    
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateString = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+      
+      const previousBalance = currentBalance / (1 + rate);
+      const earned = currentBalance - previousBalance;
+      
+      historyList.push({
+        date: dateString,
+        earned: earned,
+        balance: previousBalance
+      });
+      
+      currentBalance = previousBalance;
+    }
+  }
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '3rem' }}>
       
@@ -197,6 +221,26 @@ export default function FundsView() {
                 </button>
               </div>
             </div>
+
+            {/* Geçmiş Kazançlarım Listesi */}
+            {historyList.length > 0 && (
+              <div className="glass-panel animate-fade-in" style={{ padding: '1.5rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <TrendingUp size={18} className="text-up" /> Geçmiş Kazançlarım
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {historyList.map((item, index) => (
+                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{item.date}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span className="text-up" style={{ fontWeight: 600 }}>+₺{item.earned.toFixed(2)}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Bakiye: ₺{item.balance.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
