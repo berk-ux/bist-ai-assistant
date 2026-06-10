@@ -12,6 +12,39 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
   const [days, setDays] = useState(30); // Default 30 days
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
+  const [livePrice, setLivePrice] = useState(currentPrice);
+  const [liveChange, setLiveChange] = useState(change);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLivePrice(currentPrice);
+      setLiveChange(change);
+    }
+  }, [isOpen, currentPrice, change]);
+
+  useEffect(() => {
+    if (!isOpen || !symbol) return;
+
+    const fetchLivePrice = () => {
+      fetch(`/api/market/live/${symbol}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Canlı fiyat alınamadı.');
+          return res.json();
+        })
+        .then(data => {
+          if (data.price) setLivePrice(data.price);
+          if (data.change) setLiveChange(data.change);
+        })
+        .catch(err => {
+          console.error('Canlı fiyat fetch hatası:', err);
+        });
+    };
+
+    fetchLivePrice();
+    const interval = setInterval(fetchLivePrice, 10000);
+    return () => clearInterval(interval);
+  }, [isOpen, symbol]);
+
   useEffect(() => {
     if (!isOpen || !symbol) return;
 
@@ -53,8 +86,29 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
 
   if (!isOpen) return null;
 
-  const changeFloat = parseFloat(change);
+  const changeFloat = parseFloat(liveChange);
   const isPositive = changeFloat >= 0;
+
+  // Bugünü biçimlendir (GG/AA)
+  const todayStr = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+
+  // Canlı fiyatla geçmiş veriyi birleştir
+  const chartData = [...historyData];
+  if (chartData.length > 0 && livePrice) {
+    const lastIndex = chartData.length - 1;
+    const lastItem = chartData[lastIndex];
+    if (lastItem.date === todayStr) {
+      chartData[lastIndex] = {
+        ...lastItem,
+        price: parseFloat(livePrice)
+      };
+    } else {
+      chartData.push({
+        date: todayStr,
+        price: parseFloat(livePrice)
+      });
+    }
+  }
 
   // Chart configuration
   const width = 500;
@@ -64,7 +118,7 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
   const chartHeight = height - padding.top - padding.bottom;
 
   // Stats calculation
-  const prices = historyData.map(d => d.price);
+  const prices = chartData.map(d => d.price);
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
@@ -79,8 +133,8 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
   const yMin = minPrice - priceRange * 0.05;
   const yMax = maxPrice + priceRange * 0.05;
 
-  const points = historyData.map((d, i) => {
-    const x = padding.left + (i / (historyData.length - 1)) * chartWidth;
+  const points = chartData.map((d, i) => {
+    const x = padding.left + (i / (chartData.length - 1)) * chartWidth;
     const y = padding.top + chartHeight - ((d.price - yMin) / (yMax - yMin)) * chartHeight;
     return { x, y, price: d.price, date: d.date };
   });
@@ -96,7 +150,7 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
     const svgX = ((e.clientX - rect.left) / rect.width) * width;
     const chartX = svgX - padding.left;
     const percentX = chartX / chartWidth;
-    const idx = Math.max(0, Math.min(historyData.length - 1, Math.round(percentX * (historyData.length - 1))));
+    const idx = Math.max(0, Math.min(chartData.length - 1, Math.round(percentX * (chartData.length - 1))));
     setHoveredIndex(idx);
   };
 
@@ -148,9 +202,9 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
           
           <div className="flex items-center gap-6">
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fff' }}>₺{currentPrice}</div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fff' }}>₺{livePrice}</div>
               <div className={isPositive ? 'text-up' : 'text-down'} style={{ fontSize: '0.95rem', fontWeight: 600 }}>
-                {isPositive ? '▲' : '▼'} {isPositive ? '+' : ''}{change}% Bugün
+                {isPositive ? '▲' : '▼'} {isPositive ? '+' : ''}{liveChange}% Bugün
               </div>
             </div>
             
@@ -212,7 +266,7 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
                   </div>
                 ) : chartError ? (
                   <span style={{ fontSize: '0.85rem', color: 'var(--status-down)' }}>{chartError}</span>
-                ) : historyData.length === 0 ? (
+                ) : chartData.length === 0 ? (
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Fiyat geçmişi bulunamadı.</span>
                 ) : (
                   <svg 
@@ -260,8 +314,8 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
 
                     {/* X-Axis Dates */}
                     {[0, 0.5, 1].map((p, i) => {
-                      const idx = Math.round(p * (historyData.length - 1));
-                      if (!historyData[idx]) return null;
+                      const idx = Math.round(p * (chartData.length - 1));
+                      if (!chartData[idx]) return null;
                       const x = padding.left + p * chartWidth;
                       return (
                         <text 
@@ -272,7 +326,7 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
                           fontSize="8" 
                           textAnchor="middle"
                         >
-                          {historyData[idx].date}
+                          {chartData[idx].date}
                         </text>
                       );
                     })}

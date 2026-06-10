@@ -309,6 +309,30 @@ app.get('/api/market/history/:symbol', async (req, res) => {
   }
 });
 
+// Yeni: Tek bir hissenin anlık piyasa verisi (Canlı Fiyat)
+app.get('/api/market/live/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    const querySymbol = symbol.endsWith('.IS') ? symbol.toUpperCase() : `${symbol.toUpperCase()}.IS`;
+    
+    const quoteInfo = await yahooFinance.quote(querySymbol);
+    const result = Array.isArray(quoteInfo) ? quoteInfo[0] : quoteInfo;
+    
+    if (result) {
+      res.json({
+        symbol: symbol.toUpperCase(),
+        price: (result.regularMarketPrice || 0).toFixed(2),
+        change: (result.regularMarketChangePercent || 0).toFixed(2)
+      });
+    } else {
+      res.status(404).json({ error: 'Hisseye ait canlı veri bulunamadı.' });
+    }
+  } catch (error) {
+    console.error('Hisse canlı veri hatası:', error);
+    res.status(500).json({ error: 'Canlı fiyat verisi çekilemedi' });
+  }
+});
+
 // --- YENİ: AUTH & PORTFOLIO ROTASI (AŞAMA 7) ---
 
 // Kayıt Ol
