@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { TrendingUp, LogOut, User, LogIn, Wallet, LineChart, Newspaper, Rocket } from 'lucide-react';
+import { TrendingUp, LogOut, User, LogIn, Wallet, LineChart, Newspaper, Rocket, Banknote } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import AuthPage from './pages/AuthPage';
 import { AuthContext } from './context/AuthContext';
@@ -27,6 +27,9 @@ function App() {
     } else if (activeTab === 'ipos') {
       headerTitle = "Yaklaşan Halka Arzlar";
       headerDesc = "SPK onaylı halka arz fırsatları ve yapay zeka öngörüleri.";
+    } else if (activeTab === 'funds') {
+      headerTitle = "Yatırım Fonları";
+      headerDesc = "Gerçek TEFAS verileriyle Para Piyasası Fonları yatırım ve kazanç takibi.";
     }
 
     return (
@@ -68,6 +71,13 @@ function App() {
             onClick={() => setActiveTab('ipos')}
           >
             <Rocket size={18} /> Yaklaşan Halka Arzlar
+          </button>
+          <button 
+            className={`btn ${activeTab === 'funds' ? 'btn-primary' : ''}`} 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-start', background: activeTab === 'funds' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'funds' ? '#fff' : 'var(--text-secondary)', border: 'none', padding: '0.75rem 1rem' }}
+            onClick={() => setActiveTab('funds')}
+          >
+            <Banknote size={18} /> Yatırım Fonları
           </button>
         </nav>
       </aside>

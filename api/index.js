@@ -7,6 +7,7 @@ import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import yahooFinance2 from 'yahoo-finance2';
+import { Fund } from '@muhammedaksam/borsats';
 import db, { initDb } from './database.js';
 import BIST100_SYMBOLS from './bist100.js';
 

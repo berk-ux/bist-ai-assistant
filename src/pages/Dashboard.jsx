@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket } from 'lucide-react';
 import PortfolioModal from '../components/PortfolioModal';
 import IpoView from '../components/IpoModal';
+import FundsView from '../components/FundsView';
 import { AuthContext } from '../context/AuthContext';
 
 export default function Dashboard({ activeTab }) {
@@ -582,6 +583,13 @@ export default function Dashboard({ activeTab }) {
       {activeTab === 'ipos' && (
         <section className="animate-fade-in">
           <IpoView />
+        </section>
+      )}
+
+      {/* Funds Section */}
+      {activeTab === 'funds' && (
+        <section className="animate-fade-in">
+          <FundsView />
         </section>
       )}
 
