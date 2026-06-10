@@ -18,6 +18,11 @@ export default function Dashboard({ activeTab }) {
   const [portfolioAnalysis, setPortfolioAnalysis] = useState("");
   const [isAnalyzingPortfolio, setIsAnalyzingPortfolio] = useState(false);
 
+  // BİST AI Hisse Önerileri State'leri
+  const [stockRecommendations, setStockRecommendations] = useState([]);
+  const [isFetchingRecommendations, setIsFetchingRecommendations] = useState(false);
+  const [recommendationError, setRecommendationError] = useState(null);
+
   // Yeni Özellik: Arama Filtresi
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -183,6 +188,25 @@ export default function Dashboard({ activeTab }) {
       setPortfolioAnalysis("Analiz sırasında bağlantı hatası oluştu.");
     } finally {
       setIsAnalyzingPortfolio(false);
+    }
+  };
+
+  // Yapay Zeka Hisse Önerileri Alma
+  const fetchStockRecommendations = async () => {
+    setIsFetchingRecommendations(true);
+    setRecommendationError(null);
+    try {
+      const response = await fetch('/api/ai/stock-recommendations');
+      const data = await response.json();
+      if (data.error) {
+        setRecommendationError(data.error);
+      } else {
+        setStockRecommendations(data);
+      }
+    } catch (err) {
+      setRecommendationError("Öneriler alınırken hata oluştu.");
+    } finally {
+      setIsFetchingRecommendations(false);
     }
   };
 
@@ -408,6 +432,68 @@ export default function Dashboard({ activeTab }) {
             </button>
           </div>
 
+        </div>
+
+        {/* BİST AI Hisse Önerileri */}
+        <div style={{ gridColumn: '1 / -1', marginTop: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Sparkles size={18} className="text-up" /> BİST AI "Günün Fırsatları" (Hisse Önerileri)
+            </h3>
+            <button 
+              onClick={fetchStockRecommendations} 
+              disabled={isFetchingRecommendations}
+              className="btn btn-secondary" 
+              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <RefreshCw size={14} className={isFetchingRecommendations ? "animate-spin" : ""} /> 
+              {stockRecommendations.length > 0 ? "Önerileri Yenile" : "Yapay Zeka Önerisi Al"}
+            </button>
+          </div>
+
+          {isFetchingRecommendations && stockRecommendations.length === 0 ? (
+            <div className="glass-panel flex flex-col items-center justify-center gap-4" style={{ padding: '3rem 0', color: 'var(--text-secondary)' }}>
+              <RefreshCw className="animate-spin text-up" size={32} />
+              <p>BİST AI güncel piyasa dinamiklerini ve haberleri tarayarak size özel hisseler seçiyor...</p>
+            </div>
+          ) : recommendationError ? (
+            <div className="glass-panel flex items-center justify-center gap-2 text-down" style={{ padding: '2rem' }}>
+              <AlertCircle size={20} /> {recommendationError}
+            </div>
+          ) : stockRecommendations.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+              {stockRecommendations.map((rec, i) => (
+                <div key={i} className="glass-panel animate-fade-in" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', overflow: 'hidden' }}>
+                  {/* Dekoratif Arka Plan Işığı */}
+                  <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '100px', height: '100px', background: 'rgba(34, 197, 94, 0.1)', filter: 'blur(40px)', borderRadius: '50%' }}></div>
+                  
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff' }}>{rec.symbol}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{rec.name}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="text-up" style={{ fontSize: '1.1rem', fontWeight: 600 }}>{rec.potential}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Hedef: {rec.targetPrice}</div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, flex: 1, padding: '0.75rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
+                    <strong>Neden?</strong> {rec.reason}
+                  </div>
+                  
+                  <button className="btn btn-primary" style={{ width: '100%', padding: '0.6rem', fontSize: '0.9rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                    <Rocket size={16} /> Alış Gir
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="glass-panel flex flex-col items-center justify-center gap-3" style={{ padding: '3rem 0', color: 'var(--text-muted)' }}>
+              <Sparkles size={32} style={{ opacity: 0.5 }} />
+              <p>Piyasa fırsatlarını görmek için "Yapay Zeka Önerisi Al" butonuna tıklayın.</p>
+            </div>
+          )}
         </div>
 
       </section>

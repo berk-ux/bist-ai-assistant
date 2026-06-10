@@ -517,6 +517,39 @@ Lütfen bu portföyün riskini, sektörel çeşitliliğini (enerji, bankacılık
   }
 });
 
+// Yapay Zeka Hisse Önerileri (Screener)
+app.get('/api/ai/stock-recommendations', async (req, res) => {
+  try {
+    const prompt = `Sen Türkiye piyasalarına hakim uzman bir yapay zeka fon yöneticisisin. Bana Borsa İstanbul'dan (BİST100) güncel makroekonomik dinamiklere ve haber akışlarına göre yükseleceğini öngördüğün (potansiyeli olan) tamamen farklı 3 adet hisse öner.
+    
+DİKKAT: YALNIZCA aşağıdaki formatta GEÇERLİ BİR JSON DİZİSİ döndür. Başka hiçbir açıklama, markdown veya not ekleme!
+Örnek Format:
+[
+  { "symbol": "THYAO", "name": "Türk Hava Yolları", "targetPrice": "340.50 ₺", "potential": "+%18.5", "reason": "Turizm sezonu beklentileri ve artan yolcu kapasitesi nedeniyle havacılık sektörü ön plana çıkıyor." }
+]`;
+
+    const response = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+
+    let resultText = response.data.candidates[0].content.parts[0].text;
+    resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let recommendations = [];
+    try {
+      recommendations = JSON.parse(resultText);
+    } catch(e) {
+      console.error('JSON Parse Error for Recommendations:', e);
+      return res.status(500).json({ error: 'Yapay zeka yanıtı okunamadı.' });
+    }
+
+    res.json(recommendations);
+  } catch(err) {
+    console.error('Hisse Öneri Hatası:', err);
+    res.status(500).json({ error: 'Hisse önerileri şu an alınamıyor.' });
+  }
+});
+
 // Yeni: Gerçek Zamanlı Yatırım Fonu Verisi Çekme
 app.get('/api/funds/:code', async (req, res) => {
   try {
