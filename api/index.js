@@ -479,6 +479,16 @@ app.post('/api/portfolio/save', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/debug/portfolios', async (req, res) => {
+  try {
+    const users = await db.query('SELECT id, username FROM users');
+    const portfolios = await db.query('SELECT * FROM portfolios');
+    res.json({ users: users.rows, portfolios: portfolios.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- YAPAY ZEKA (AI) ENDPOINTLERI ---
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
