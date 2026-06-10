@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import PortfolioModal from '../components/PortfolioModal';
@@ -87,6 +87,9 @@ export default function Dashboard({ activeTab }) {
   // Yeni Özellik: Hisse Detay & Grafik Modali
   const [selectedStockForDetail, setSelectedStockForDetail] = useState(null);
   const [isStockDetailOpen, setIsStockDetailOpen] = useState(false);
+
+  // Yeni Özellik: Akordeon Genişleme State'i
+  const [expandedStocks, setExpandedStocks] = useState({});
 
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -271,7 +274,7 @@ export default function Dashboard({ activeTab }) {
     
     let totalCurrentValue = 0;
     let totalCost = 0;
-    let allocations = [];
+    const groupedAllocations = {};
 
     myPortfolio.forEach(item => {
       const marketItem = marketData.find(m => m.symbol === item.symbol);
@@ -283,11 +286,16 @@ export default function Dashboard({ activeTab }) {
       totalCost += itemCost;
       totalCurrentValue += itemCurrentValue;
       
-      allocations.push({
-        symbol: item.symbol,
-        value: itemCurrentValue
-      });
+      if (!groupedAllocations[item.symbol]) {
+        groupedAllocations[item.symbol] = 0;
+      }
+      groupedAllocations[item.symbol] += itemCurrentValue;
     });
+
+    const allocations = Object.keys(groupedAllocations).map(symbol => ({
+      symbol,
+      value: groupedAllocations[symbol]
+    }));
 
     const totalProfit = totalCurrentValue - totalCost;
     const percentProfit = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
@@ -300,6 +308,34 @@ export default function Dashboard({ activeTab }) {
       isPositive: totalProfit >= 0,
       allocations: allocations.sort((a, b) => b.value - a.value)
     };
+  };
+
+  const getGroupedPortfolio = () => {
+    const groups = {};
+    myPortfolio.forEach(item => {
+      if (!groups[item.symbol]) {
+        groups[item.symbol] = {
+          symbol: item.symbol,
+          transactions: [],
+          totalQuantity: 0,
+          totalCost: 0
+        };
+      }
+      groups[item.symbol].transactions.push(item);
+      groups[item.symbol].totalQuantity += item.quantity;
+      groups[item.symbol].totalCost += (item.buyPrice * item.quantity);
+    });
+
+    return Object.values(groups).map(group => {
+      const avgPrice = group.totalQuantity > 0 ? group.totalCost / group.totalQuantity : 0;
+      const sortedTransactions = [...group.transactions].sort((a, b) => new Date(b.buyDate) - new Date(a.buyDate));
+      return {
+        symbol: group.symbol,
+        totalQuantity: group.totalQuantity,
+        avgPrice: avgPrice,
+        transactions: sortedTransactions
+      };
+    });
   };
 
   const portfoy = calculatePortfolioValue();
@@ -426,36 +462,127 @@ export default function Dashboard({ activeTab }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {myPortfolio.map((item, idx) => {
-                    const marketItem = marketData.find(m => m.symbol === item.symbol);
-                    const currentPrice = marketItem ? parseFloat(marketItem.price) : item.buyPrice;
-                    const plVal = (currentPrice - item.buyPrice) * item.quantity;
-                    const plPct = ((currentPrice - item.buyPrice) / item.buyPrice) * 100;
+                  {getGroupedPortfolio().map((group) => {
+                    const marketItem = marketData.find(m => m.symbol === group.symbol);
+                    const currentPrice = marketItem ? parseFloat(marketItem.price) : group.avgPrice;
+                    const plVal = (currentPrice - group.avgPrice) * group.totalQuantity;
+                    const plPct = group.avgPrice > 0 ? ((currentPrice - group.avgPrice) / group.avgPrice) * 100 : 0;
                     const isUp = plVal >= 0;
-                    
-                    const displayQuantity = Number.isInteger(item.quantity) 
-                      ? item.quantity 
-                      : parseFloat(item.quantity).toLocaleString('tr-TR', { maximumFractionDigits: 4 });
-                    
+                    const canExpand = group.transactions.length > 1;
+                    const isExpanded = expandedStocks[group.symbol];
+
+                    const toggleExpand = () => {
+                      if (!canExpand) return;
+                      setExpandedStocks(prev => ({
+                        ...prev,
+                        [group.symbol]: !prev[group.symbol]
+                      }));
+                    };
+
                     return (
-                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                        <td 
-                          style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: 'var(--accent-primary)', cursor: 'pointer' }}
-                          onClick={() => {
-                            const marketItem = marketData.find(m => m.symbol === item.symbol);
-                            handleStockClick(item.symbol, marketItem ? marketItem.price : item.buyPrice.toFixed(2), marketItem ? marketItem.change : '0');
+                      <Fragment key={group.symbol}>
+                        <tr 
+                          onClick={toggleExpand}
+                          style={{ 
+                            borderBottom: '1px solid rgba(255,255,255,0.02)',
+                            cursor: canExpand ? 'pointer' : 'default',
+                            background: isExpanded ? 'rgba(255,255,255,0.02)' : 'transparent',
+                            transition: 'background-color 0.2s ease'
                           }}
                         >
-                          {item.symbol}
-                        </td>
-                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{item.buyDate || '-'}</td>
-                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{displayQuantity} Lot</td>
-                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>₺{item.buyPrice.toFixed(2)}</td>
-                        <td style={{ padding: '0.75rem 0.5rem', color: '#fff' }}>₺{currentPrice.toFixed(2)}</td>
-                        <td className={isUp ? 'text-up' : 'text-down'} style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 600 }}>
-                          {isUp ? '+' : ''}₺{plVal.toFixed(2)} ({isUp ? '+' : ''}{plPct.toFixed(2)}%)
-                        </td>
-                      </tr>
+                          <td 
+                            style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: 'var(--accent-primary)', cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const marketItem = marketData.find(m => m.symbol === group.symbol);
+                              handleStockClick(group.symbol, marketItem ? marketItem.price : group.avgPrice.toFixed(2), marketItem ? marketItem.change : '0');
+                            }}
+                          >
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                              {group.symbol}
+                              {canExpand && (
+                                <span style={{ 
+                                  fontSize: '0.7rem', 
+                                  background: 'rgba(255,255,255,0.06)', 
+                                  color: 'var(--text-secondary)',
+                                  padding: '1px 5px', 
+                                  borderRadius: '10px' 
+                                }}>
+                                  {group.transactions.length}
+                                </span>
+                              )}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>
+                            {canExpand ? `Çoklu Alım` : (group.transactions[0]?.buyDate || '-')}
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>
+                            {group.totalQuantity.toLocaleString('tr-TR', { maximumFractionDigits: 4 })} Lot
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>
+                            ₺{group.avgPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem', color: '#fff' }}>
+                            ₺{currentPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className={isUp ? 'text-up' : 'text-down'} style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 600 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', width: '100%', justifyContent: 'flex-end' }}>
+                              {isUp ? '+' : ''}₺{plVal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({isUp ? '+' : ''}{plPct.toFixed(2)}%)
+                              {canExpand && (
+                                <span style={{ 
+                                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s',
+                                  color: 'var(--text-muted)',
+                                  fontSize: '0.8rem',
+                                  marginLeft: '0.2rem',
+                                  display: 'inline-block'
+                                }}>
+                                  ▼
+                                </span>
+                              )}
+                            </span>
+                          </td>
+                        </tr>
+                        {canExpand && isExpanded && (
+                          <tr>
+                            <td colSpan={6} style={{ padding: '0.5rem 1rem 1rem 1rem', background: 'rgba(0, 0, 0, 0.15)' }}>
+                              <div className="glass-panel" style={{ 
+                                padding: '1rem', 
+                                background: 'rgba(255,255,255,0.01)', 
+                                border: '1px solid rgba(255,255,255,0.03)',
+                                borderRadius: 'var(--radius-sm)'
+                              }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.25rem' }}>İşlem Geçmişi</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                  {group.transactions.map((t, tIdx) => {
+                                    const tPlVal = (currentPrice - t.buyPrice) * t.quantity;
+                                    const tPlPct = t.buyPrice > 0 ? ((currentPrice - t.buyPrice) / t.buyPrice) * 100 : 0;
+                                    const tIsUp = tPlVal >= 0;
+                                    return (
+                                      <div key={t.id || tIdx} style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center', 
+                                        fontSize: '0.8rem',
+                                        padding: '0.25rem 0',
+                                        borderBottom: tIdx < group.transactions.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none'
+                                      }}>
+                                        <div style={{ color: 'var(--text-secondary)' }}>
+                                          <span style={{ fontWeight: 500, marginRight: '1rem', color: 'var(--text-muted)' }}>{t.buyDate}</span>
+                                          <span>{t.quantity.toLocaleString('tr-TR', { maximumFractionDigits: 4 })} Lot @ ₺{t.buyPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className={tIsUp ? 'text-up' : 'text-down'} style={{ fontWeight: 600 }}>
+                                          {tIsUp ? '+' : ''}₺{tPlVal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({tIsUp ? '+' : ''}{tPlPct.toFixed(2)}%)
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>
