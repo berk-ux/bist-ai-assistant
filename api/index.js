@@ -496,6 +496,27 @@ Bu şirketin sektörel konumunu, halka arzının potansiyelini ve uzun vadeli be
   }
 });
 
+// Portföy Özel Yapay Zeka Koçluk Analizi
+app.post('/api/ai/portfolio-analysis', async (req, res) => {
+  try {
+    const { portfolioStr } = req.body;
+    const prompt = `Sen profesyonel bir Borsa İstanbul portföy yöneticisisin. Aşağıdaki hisse senedi portföyünü incele:
+${portfolioStr}
+
+Lütfen bu portföyün riskini, sektörel çeşitliliğini (enerji, bankacılık, sanayi vb.) ve maliyet/kâr durumunu analiz et. Çok uzun olmayan (yaklaşık 3-4 cümlelik), profesyonel, elit ve cesaret verici bir özet yaz. Eksik gördüğün sektörel çeşitlilik varsa kibarca tavsiye et. Kesin al/sat önerisi verme.`;
+
+    const response = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+
+    const analysis = response.data.candidates[0].content.parts[0].text;
+    res.json({ analysis });
+  } catch(err) {
+    console.error('Portföy Analiz Hatası:', err);
+    res.status(500).json({ error: 'Portföy analizi şu an yapılamıyor.' });
+  }
+});
+
 // Yeni: Gerçek Zamanlı Yatırım Fonu Verisi Çekme
 app.get('/api/funds/:code', async (req, res) => {
   try {

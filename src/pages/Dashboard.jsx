@@ -13,6 +13,10 @@ export default function Dashboard({ activeTab }) {
   
   const [analysis, setAnalysis] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // Portföy AI Koçluk State'leri
+  const [portfolioAnalysis, setPortfolioAnalysis] = useState("");
+  const [isAnalyzingPortfolio, setIsAnalyzingPortfolio] = useState(false);
 
   // Yeni Özellik: Arama Filtresi
   const [searchQuery, setSearchQuery] = useState("");
@@ -153,6 +157,32 @@ export default function Dashboard({ activeTab }) {
       setAnalysis("Analiz yapılırken bir hata oluştu. İnternet bağlantınızı kontrol edin.");
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  // Portföy Özel Yapay Zeka Koçu Analizi
+  const handleAnalyzePortfolio = async () => {
+    if (myPortfolio.length === 0) {
+      setPortfolioAnalysis("Lütfen önce portföyünüze hisse ekleyin.");
+      return;
+    }
+    
+    setIsAnalyzingPortfolio(true);
+    setPortfolioAnalysis("");
+    try {
+      const portfolioStr = myPortfolio.map(p => `${p.symbol}: ${p.quantity} lot (Maliyet: ${p.buyPrice} ₺)`).join('\n');
+      const response = await fetch('/api/ai/portfolio-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ portfolioStr })
+      });
+      const data = await response.json();
+      if (data.error) setPortfolioAnalysis("Hata: " + data.error);
+      else setPortfolioAnalysis(data.analysis);
+    } catch(err) {
+      setPortfolioAnalysis("Analiz sırasında bağlantı hatası oluştu.");
+    } finally {
+      setIsAnalyzingPortfolio(false);
     }
   };
 
@@ -297,6 +327,84 @@ export default function Dashboard({ activeTab }) {
             <span className="text-up" style={{ fontWeight: 600 }}>+12.4%</span>
           </div>
         </div>
+        </div>
+        
+        {/* Detaylı Portföy Tablosu ve AI Analizi */}
+        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
+          
+          {/* Sol: Holding Tablosu */}
+          <div className="glass-panel" style={{ padding: '1.5rem', overflowX: 'auto' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '1rem', fontWeight: 600 }}>Açık Pozisyonlar</h3>
+            {myPortfolio.length > 0 ? (
+              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
+                    <th style={{ padding: '0.5rem' }}>Hisse</th>
+                    <th style={{ padding: '0.5rem' }}>Miktar</th>
+                    <th style={{ padding: '0.5rem' }}>Ort. Maliyet</th>
+                    <th style={{ padding: '0.5rem' }}>Canlı Fiyat</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right' }}>Kâr/Zarar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myPortfolio.map((item, idx) => {
+                    const marketItem = marketData.find(m => m.symbol === item.symbol);
+                    const currentPrice = marketItem ? parseFloat(marketItem.price) : item.buyPrice;
+                    const plVal = (currentPrice - item.buyPrice) * item.quantity;
+                    const plPct = ((currentPrice - item.buyPrice) / item.buyPrice) * 100;
+                    const isUp = plVal >= 0;
+                    
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                        <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500, color: '#fff' }}>{item.symbol}</td>
+                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{item.quantity} Lot</td>
+                        <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>₺{item.buyPrice.toFixed(2)}</td>
+                        <td style={{ padding: '0.75rem 0.5rem', color: '#fff' }}>₺{currentPrice.toFixed(2)}</td>
+                        <td className={isUp ? 'text-up' : 'text-down'} style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 600 }}>
+                          {isUp ? '+' : ''}₺{plVal.toFixed(2)} ({isUp ? '+' : ''}{plPct.toFixed(2)}%)
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '2rem 0' }}>
+                Portföyünüzde hiç hisse bulunmuyor.
+              </div>
+            )}
+          </div>
+
+          {/* Sağ: AI Portföy Koçu */}
+          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Sparkles size={16} className="text-up" /> Portföy Koçu (AI)
+            </h3>
+            
+            <div style={{ flex: 1, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', overflowY: 'auto', minHeight: '120px' }}>
+              {isAnalyzingPortfolio ? (
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="animate-spin text-up" size={16} /> Yapay zeka portföyünüzü inceliyor...
+                </div>
+              ) : portfolioAnalysis ? (
+                <div className="animate-fade-in" dangerouslySetInnerHTML={{ __html: portfolioAnalysis.replace(/\n/g, '<br/>') }} />
+              ) : (
+                "BİST AI portföyünüzün sektörel dağılımını, maliyet riskini ve büyüme potansiyelini analiz edip size profesyonel tavsiyeler sunar."
+              )}
+            </div>
+
+            <button 
+              onClick={handleAnalyzePortfolio} 
+              disabled={isAnalyzingPortfolio}
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '0.75rem', fontWeight: 600 }}
+            >
+              Yapay Zekaya Danış
+            </button>
+          </div>
+
+        </div>
+
       </section>
       )}
 
