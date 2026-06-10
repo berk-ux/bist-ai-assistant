@@ -1,11 +1,56 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket, AlertCircle } from 'lucide-react';
+import { Sparkles, ExternalLink, RefreshCw, Edit3, Rocket, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import PortfolioModal from '../components/PortfolioModal';
 import IpoView from '../components/IpoModal';
 import FundsView from '../components/FundsView';
 import StockDetailModal from '../components/StockDetailModal';
 import { AuthContext } from '../context/AuthContext';
+
+const COMPANY_NAMES = {
+  'ENPRA': 'Enpara Bank',
+  'ISCTR': 'İş Bankası C',
+  'MIATK': 'Mia Teknoloji',
+  'THYAO': 'Türk Hava Yolları',
+  'TUPRS': 'Tüpraş',
+  'SISE': 'Şişecam',
+  'ASELS': 'Aselsan',
+  'PPZ': 'Azimut Para Piyasası Fonu',
+  'AKBNK': 'Akbank T.A.Ş.',
+  'ARCLK': 'Arçelik A.Ş.',
+  'BIMAS': 'BİM Birleşik Mağazalar',
+  'EKGYO': 'Emlak Konut GYO',
+  'EREGL': 'Ereğli Demir Çelik',
+  'FROTO': 'Ford Otosan',
+  'GARAN': 'Garanti BBVA',
+  'GUBRF': 'Gübre Fabrikaları',
+  'HALKB': 'Halkbank',
+  'KCHOL': 'Koç Holding',
+  'KOZAL': 'Koza Altın İşletmeleri',
+  'KARDM': 'Kardemir D',
+  'PETKM': 'Petkim',
+  'PGSUS': 'Pegasus Hava Taşımacılığı',
+  'SAHOL': 'Sabancı Holding',
+  'SASA': 'Sasa Polyester',
+  'TCELL': 'Turkcell',
+  'TOASO': 'Tofaş Oto. Fab.',
+  'TTKOM': 'Türk Telekom',
+  'VAKBN': 'Vakıfbank',
+  'YKBNK': 'Yapı Kredi Bankası',
+  'AEFES': 'Anadolu Efes',
+  'AGHOL': 'Anadolu Grubu Holding',
+  'AHGAZ': 'Ahlatcı Doğalgaz',
+  'AKCNS': 'Akçansa Çimento',
+  'AKFGY': 'Akfen GYO',
+  'AKSA': 'Aksa Akrilik',
+  'AKSEN': 'Aksa Enerji',
+  'ALARK': 'Alarko Holding',
+  'ALBRK': 'Albaraka Türk',
+  'ALFAS': 'Alfa Solar Enerji',
+  'ASTOR': 'Astor Enerji',
+  'ASUZU': 'Anadolu Isuzu',
+  'AYDEM': 'Aydem Enerji'
+};
 
 export default function Dashboard({ activeTab }) {
   const [newsList, setNewsList] = useState([]);
@@ -520,48 +565,103 @@ export default function Dashboard({ activeTab }) {
       {/* Market Watch */}
       {activeTab === 'market' && (
       <section className="animate-fade-in" style={{ marginBottom: '3rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Takip Edilen Hisseler</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+          <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '-0.3px' }}>Takip Edilen Hisseler</h3>
         </div>
         
         {isLoadingMarket ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-             <div className="glass-panel animate-pulse" style={{ height: '80px' }}></div>
-             <div className="glass-panel animate-pulse" style={{ height: '80px' }}></div>
-             <div className="glass-panel animate-pulse" style={{ height: '80px' }}></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))', gap: '1.2rem' }}>
+             <div className="glass-panel animate-pulse" style={{ height: '125px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)' }}></div>
+             <div className="glass-panel animate-pulse" style={{ height: '125px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)' }}></div>
+             <div className="glass-panel animate-pulse" style={{ height: '125px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)' }}></div>
           </div>
         ) : (
           <>
             {/* Öncelikli Hisseler (Her zaman üstte sabit) */}
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-              gap: '1rem',
-              marginBottom: '2rem'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))', 
+              gap: '1.2rem',
+              marginBottom: '2.5rem'
             }}>
               {marketData
                 .filter(stock => ['ENPRA', 'ISCTR', 'MIATK', 'THYAO', 'TUPRS', 'SISE', 'ASELS', 'PPZ'].includes(stock.symbol))
                 .map((stock, idx) => {
                   const changeFloat = parseFloat(stock.change);
                   const isPositive = changeFloat >= 0;
+                  const cName = COMPANY_NAMES[stock.symbol.toUpperCase()] || `${stock.symbol.toUpperCase()} A.Ş.`;
                   return (
                     <div 
                       key={`top-${idx}`} 
                       className={`stock-card ${isPositive ? 'up' : changeFloat < 0 ? 'down' : ''}`}
                       onClick={() => handleStockClick(stock.symbol, stock.price, stock.change)}
                     >
-                      <div className="flex justify-between items-center" style={{ width: '100%' }}>
-                        <span className="stock-symbol">{stock.symbol}</span>
-                        <div className={`stock-avatar ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
-                          {stock.symbol.charAt(0)}
-                        </div>
-                      </div>
+                      {/* Ambient Background Light */}
+                      <div 
+                        className="stock-card-glow"
+                        style={{
+                          background: isPositive 
+                            ? 'rgba(48, 209, 88, 0.15)' 
+                            : changeFloat < 0 
+                              ? 'rgba(255, 69, 58, 0.15)' 
+                              : 'rgba(255, 255, 255, 0.08)'
+                        }}
+                      />
                       
-                      <div className="flex justify-between items-end" style={{ width: '100%', marginTop: '0.5rem' }}>
-                        <span className="stock-price">₺{stock.price}</span>
-                        <span className={`stock-change-badge ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
-                          {isPositive ? '▲' : changeFloat < 0 ? '▼' : '•'} {isPositive ? '+' : ''}{stock.change}%
-                        </span>
+                      <div className="stock-card-content">
+                        {/* Top Row: Symbol, Name & Indicator */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span className="stock-symbol">{stock.symbol}</span>
+                            <span className="stock-name" title={cName}>{cName}</span>
+                          </div>
+                          <div>
+                            {isPositive ? (
+                              <ArrowUpRight size={16} style={{ color: '#30d158', filter: 'drop-shadow(0 0 5px rgba(48,209,88,0.4))' }} />
+                            ) : changeFloat < 0 ? (
+                              <ArrowDownRight size={16} style={{ color: '#ff453a', filter: 'drop-shadow(0 0 5px rgba(255,69,58,0.4))' }} />
+                            ) : null}
+                          </div>
+                        </div>
+                        
+                        {/* Sparkline Graphic */}
+                        <div style={{ height: '26px', margin: '0.4rem 0', display: 'flex', alignItems: 'center', opacity: 0.7 }}>
+                          <svg viewBox="0 0 100 30" style={{ width: '100%', height: '100%', overflow: 'visible' }} preserveAspectRatio="none">
+                            {isPositive ? (
+                              <>
+                                <defs>
+                                  <linearGradient id={`grad-up-top-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#30d158" stopOpacity="0.12" />
+                                    <stop offset="100%" stopColor="#30d158" stopOpacity="0.0" />
+                                  </linearGradient>
+                                </defs>
+                                <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke="#30d158" strokeWidth="2.2" strokeLinecap="round" />
+                                <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5 L100,30 L0,30 Z" fill={`url(#grad-up-top-${stock.symbol})`} />
+                              </>
+                            ) : changeFloat < 0 ? (
+                              <>
+                                <defs>
+                                  <linearGradient id={`grad-down-top-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#ff453a" stopOpacity="0.12" />
+                                    <stop offset="100%" stopColor="#ff453a" stopOpacity="0.0" />
+                                  </linearGradient>
+                                </defs>
+                                <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke="#ff453a" strokeWidth="2.2" strokeLinecap="round" />
+                                <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25 L100,30 L0,30 Z" fill={`url(#grad-down-top-${stock.symbol})`} />
+                              </>
+                            ) : (
+                              <path d="M0,15 L100,15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeDasharray="3,3" />
+                            )}
+                          </svg>
+                        </div>
+
+                        {/* Bottom Row: Price & Badge */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: '0.2rem' }}>
+                          <span className="stock-price">₺{stock.price}</span>
+                          <span className={`stock-change-badge ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
+                            {isPositive ? '▲' : changeFloat < 0 ? '▼' : '•'} {isPositive ? '+' : ''}{stock.change}%
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -569,25 +669,50 @@ export default function Dashboard({ activeTab }) {
             </div>
 
             {/* Diğer BİST 100 Hisseleri */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', marginTop: '2rem' }}>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 500 }}>Diğer BİST 100 Hisseleri</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', marginTop: '2.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '-0.3px' }}>Diğer BİST 100 Hisseleri</h3>
               <div style={{ position: 'relative' }}>
                 <input 
                   type="text" 
                   placeholder="Hisse Ara..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="glass-panel"
-                  style={{ padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '200px', fontSize: '0.9rem' }}
+                  style={{ 
+                    padding: '0.5rem 1rem 0.5rem 2.2rem', 
+                    borderRadius: '100px', 
+                    border: '1px solid rgba(255, 255, 255, 0.08)', 
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    color: '#fff', 
+                    width: '220px', 
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s',
+                    outline: 'none'
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                    e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.05)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
+                <span style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#8e8e93', display: 'flex', alignItems: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </span>
               </div>
             </div>
 
-            <div className="scrollable-market-watch">
+            <div className="scrollable-market-watch" style={{ paddingBottom: '1rem' }}>
               <div style={{ 
                 display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-                gap: '1rem' 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))', 
+                gap: '1.2rem' 
               }}>
                 {marketData
                   .filter(stock => !['ENPRA', 'ISCTR', 'MIATK', 'THYAO', 'TUPRS', 'SISE', 'ASELS', 'PPZ'].includes(stock.symbol))
@@ -595,24 +720,79 @@ export default function Dashboard({ activeTab }) {
                   .map((stock, idx) => {
                     const changeFloat = parseFloat(stock.change);
                     const isPositive = changeFloat >= 0;
+                    const cName = COMPANY_NAMES[stock.symbol.toUpperCase()] || `${stock.symbol.toUpperCase()} A.Ş.`;
                     return (
                       <div 
                         key={`other-${idx}`} 
                         className={`stock-card ${isPositive ? 'up' : changeFloat < 0 ? 'down' : ''}`}
                         onClick={() => handleStockClick(stock.symbol, stock.price, stock.change)}
                       >
-                        <div className="flex justify-between items-center" style={{ width: '100%' }}>
-                          <span className="stock-symbol">{stock.symbol}</span>
-                          <div className={`stock-avatar ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
-                            {stock.symbol.charAt(0)}
-                          </div>
-                        </div>
+                        {/* Ambient Background Light */}
+                        <div 
+                          className="stock-card-glow"
+                          style={{
+                            background: isPositive 
+                              ? 'rgba(48, 209, 88, 0.15)' 
+                              : changeFloat < 0 
+                                ? 'rgba(255, 69, 58, 0.15)' 
+                                : 'rgba(255, 255, 255, 0.08)'
+                          }}
+                        />
                         
-                        <div className="flex justify-between items-end" style={{ width: '100%', marginTop: '0.5rem' }}>
-                          <span className="stock-price">₺{stock.price}</span>
-                          <span className={`stock-change-badge ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
-                            {isPositive ? '▲' : changeFloat < 0 ? '▼' : '•'} {isPositive ? '+' : ''}{stock.change}%
-                          </span>
+                        <div className="stock-card-content">
+                          {/* Top Row: Symbol, Name & Indicator */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span className="stock-symbol">{stock.symbol}</span>
+                              <span className="stock-name" title={cName}>{cName}</span>
+                            </div>
+                            <div>
+                              {isPositive ? (
+                                <ArrowUpRight size={16} style={{ color: '#30d158', filter: 'drop-shadow(0 0 5px rgba(48,209,88,0.4))' }} />
+                              ) : changeFloat < 0 ? (
+                                <ArrowDownRight size={16} style={{ color: '#ff453a', filter: 'drop-shadow(0 0 5px rgba(255,69,58,0.4))' }} />
+                              ) : null}
+                            </div>
+                          </div>
+                          
+                          {/* Sparkline Graphic */}
+                          <div style={{ height: '26px', margin: '0.4rem 0', display: 'flex', alignItems: 'center', opacity: 0.7 }}>
+                            <svg viewBox="0 0 100 30" style={{ width: '100%', height: '100%', overflow: 'visible' }} preserveAspectRatio="none">
+                              {isPositive ? (
+                                <>
+                                  <defs>
+                                    <linearGradient id={`grad-up-other-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="0%" stopColor="#30d158" stopOpacity="0.12" />
+                                      <stop offset="100%" stopColor="#30d158" stopOpacity="0.0" />
+                                    </linearGradient>
+                                  </defs>
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke="#30d158" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5 L100,30 L0,30 Z" fill={`url(#grad-up-other-${stock.symbol})`} />
+                                </>
+                              ) : changeFloat < 0 ? (
+                                <>
+                                  <defs>
+                                    <linearGradient id={`grad-down-other-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="0%" stopColor="#ff453a" stopOpacity="0.12" />
+                                      <stop offset="100%" stopColor="#ff453a" stopOpacity="0.0" />
+                                    </linearGradient>
+                                  </defs>
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke="#ff453a" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25 L100,30 L0,30 Z" fill={`url(#grad-down-other-${stock.symbol})`} />
+                                </>
+                              ) : (
+                                <path d="M0,15 L100,15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeDasharray="3,3" />
+                              )}
+                            </svg>
+                          </div>
+
+                          {/* Bottom Row: Price & Badge */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: '0.2rem' }}>
+                            <span className="stock-price">₺{stock.price}</span>
+                            <span className={`stock-change-badge ${isPositive ? 'up' : changeFloat < 0 ? 'down' : 'neutral'}`}>
+                              {isPositive ? '▲' : changeFloat < 0 ? '▼' : '•'} {isPositive ? '+' : ''}{stock.change}%
+                            </span>
+                          </div>
                         </div>
                       </div>
                     );
