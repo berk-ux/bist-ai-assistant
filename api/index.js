@@ -282,6 +282,44 @@ app.get('/api/market/history/:symbol', async (req, res) => {
     const days = parseInt(req.query.days) || 30; // Varsayılan 30 gün
     const querySymbol = symbol.endsWith('.IS') ? symbol : `${symbol}.IS`;
     
+    if (days === 1) {
+      const now = new Date();
+      const fourDaysAgo = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000);
+      
+      const result = await yahooFinance.chart(querySymbol, {
+        period1: fourDaysAgo,
+        period2: now,
+        interval: '15m'
+      });
+      
+      if (result && result.quotes && result.quotes.length > 0) {
+        const groups = {};
+        for (const quote of result.quotes) {
+          if (quote.close === null || quote.close === undefined) continue;
+          const dateStr = new Date(quote.date).toISOString().split('T')[0];
+          if (!groups[dateStr]) groups[dateStr] = [];
+          groups[dateStr].push(quote);
+        }
+        
+        const daysWithData = Object.keys(groups).sort();
+        if (daysWithData.length > 0) {
+          const lastDayStr = daysWithData[daysWithData.length - 1];
+          const lastDayQuotes = groups[lastDayStr];
+          
+          const formatted = lastDayQuotes.map(quote => ({
+            date: new Date(quote.date).toLocaleTimeString('tr-TR', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              timeZone: 'Europe/Istanbul'
+            }),
+            price: parseFloat(quote.close.toFixed(2))
+          }));
+          return res.json(formatted);
+        }
+      }
+      return res.status(404).json({ error: 'Bugüne ait gün içi fiyat verisi bulunamadı.' });
+    }
+
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - days);

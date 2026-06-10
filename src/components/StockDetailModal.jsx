@@ -9,7 +9,7 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
   const [stockNews, setStockNews] = useState(null);
   const [isLoadingNews, setIsLoadingNews] = useState(true);
   
-  const [days, setDays] = useState(30); // Default 30 days
+  const [days, setDays] = useState(1); // Default 1 day (Günlük)
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const [livePrice, setLivePrice] = useState(currentPrice);
@@ -89,24 +89,39 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
   const changeFloat = parseFloat(liveChange);
   const isPositive = changeFloat >= 0;
 
-  // Bugünü biçimlendir (GG/AA)
+  // Bugünü ve anlık saati biçimlendir
   const todayStr = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+  const currentTimeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' });
 
-  // Canlı fiyatla geçmiş veriyi birleştir
+  // Canlı fiyatla geçmiş/gün içi veriyi birleştir
   const chartData = [...historyData];
   if (chartData.length > 0 && livePrice) {
     const lastIndex = chartData.length - 1;
     const lastItem = chartData[lastIndex];
-    if (lastItem.date === todayStr) {
-      chartData[lastIndex] = {
-        ...lastItem,
-        price: parseFloat(livePrice)
-      };
+    if (days === 1) {
+      if (lastItem.date === currentTimeStr) {
+        chartData[lastIndex] = {
+          ...lastItem,
+          price: parseFloat(livePrice)
+        };
+      } else {
+        chartData.push({
+          date: currentTimeStr,
+          price: parseFloat(livePrice)
+        });
+      }
     } else {
-      chartData.push({
-        date: todayStr,
-        price: parseFloat(livePrice)
-      });
+      if (lastItem.date === todayStr) {
+        chartData[lastIndex] = {
+          ...lastItem,
+          price: parseFloat(livePrice)
+        };
+      } else {
+        chartData.push({
+          date: todayStr,
+          price: parseFloat(livePrice)
+        });
+      }
     }
   }
 
@@ -141,6 +156,14 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
 
   const linePath = points.length > 0 ? points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') : '';
   const areaPath = points.length > 0 ? `${linePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z` : '';
+
+  // Tooltip için bir önceki noktaya göre fark/değişim oranlarını hesapla
+  let hoverDiff = 0;
+  let hoverDiffPct = 0;
+  if (hoveredIndex !== null && hoveredIndex > 0 && points[hoveredIndex] && points[hoveredIndex - 1]) {
+    hoverDiff = points[hoveredIndex].price - points[hoveredIndex - 1].price;
+    hoverDiffPct = (hoverDiff / points[hoveredIndex - 1].price) * 100;
+  }
 
   // Handle Mouse Move on SVG for Tooltip
   const handleMouseMove = (e) => {
@@ -234,6 +257,7 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
                 {/* Period Tabs */}
                 <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
                   {[
+                    { label: '1G', val: 1 },
                     { label: '1H', val: 7 },
                     { label: '1A', val: 30 },
                     { label: '3A', val: 90 }
@@ -366,33 +390,67 @@ export default function StockDetailModal({ isOpen, onClose, symbol, currentPrice
                         
                         {/* Tooltip Card */}
                         <g>
-                          <rect 
-                            x={points[hoveredIndex].x + 10 > width - 110 ? points[hoveredIndex].x - 120 : points[hoveredIndex].x + 10}
-                            y={points[hoveredIndex].y - 40 < 5 ? points[hoveredIndex].y + 10 : points[hoveredIndex].y - 40} 
-                            width="110" 
-                            height="36" 
-                            rx="5" 
-                            fill="rgba(10,10,12,0.95)" 
-                            stroke="rgba(255,255,255,0.15)" 
-                            style={{ filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.5))' }}
-                          />
-                          <text 
-                            x={points[hoveredIndex].x + 10 > width - 110 ? points[hoveredIndex].x - 110 : points[hoveredIndex].x + 20}
-                            y={points[hoveredIndex].y - 40 < 5 ? points[hoveredIndex].y + 22 : points[hoveredIndex].y - 28}
-                            fill="var(--text-secondary)"
-                            fontSize="8"
-                          >
-                            {points[hoveredIndex].date}
-                          </text>
-                          <text 
-                            x={points[hoveredIndex].x + 10 > width - 110 ? points[hoveredIndex].x - 110 : points[hoveredIndex].x + 20}
-                            y={points[hoveredIndex].y - 40 < 5 ? points[hoveredIndex].y + 36 : points[hoveredIndex].y - 12}
-                            fill="#fff"
-                            fontSize="10"
-                            fontWeight="bold"
-                          >
-                            ₺{points[hoveredIndex].price.toFixed(2)}
-                          </text>
+                          {(() => {
+                            const tooltipWidth = 120;
+                            const tooltipHeight = 48;
+                            const isNearRight = points[hoveredIndex].x + 10 > width - tooltipWidth;
+                            const isNearTop = points[hoveredIndex].y - 52 < 5;
+                            
+                            const rectX = isNearRight ? points[hoveredIndex].x - (tooltipWidth + 10) : points[hoveredIndex].x + 10;
+                            const rectY = isNearTop ? points[hoveredIndex].y + 10 : points[hoveredIndex].y - 52;
+                            
+                            const textX = rectX + 10;
+                            const dateY = rectY + 14;
+                            const priceY = rectY + 28;
+                            const diffY = rectY + 41;
+
+                            return (
+                              <>
+                                <rect 
+                                  x={rectX}
+                                  y={rectY} 
+                                  width={tooltipWidth} 
+                                  height={tooltipHeight} 
+                                  rx="5" 
+                                  fill="rgba(10,10,12,0.95)" 
+                                  stroke="rgba(255,255,255,0.15)" 
+                                  style={{ filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.5))' }}
+                                />
+                                <text 
+                                  x={textX} 
+                                  y={dateY}
+                                  fill="var(--text-secondary)"
+                                  fontSize="8"
+                                >
+                                  {points[hoveredIndex].date} {days === 1 ? 'saat' : ''}
+                                </text>
+                                <text 
+                                  x={textX} 
+                                  y={priceY}
+                                  fill="#fff"
+                                  fontSize="10"
+                                  fontWeight="bold"
+                                >
+                                  ₺{points[hoveredIndex].price.toFixed(2)}
+                                </text>
+                                {hoveredIndex === 0 ? (
+                                  <text x={textX} y={diffY} fill="#8e8e93" fontSize="8">
+                                    • Başlangıç
+                                  </text>
+                                ) : (
+                                  <text 
+                                    x={textX} 
+                                    y={diffY} 
+                                    fill={hoverDiff > 0 ? "#30d158" : hoverDiff < 0 ? "#ff453a" : "#8e8e93"} 
+                                    fontSize="8" 
+                                    fontWeight="bold"
+                                  >
+                                    {hoverDiff > 0 ? "▲" : hoverDiff < 0 ? "▼" : "•"} {hoverDiff > 0 ? "+" : ""}{hoverDiff.toFixed(2)} ₺ ({hoverDiff > 0 ? "+" : ""}{hoverDiffPct.toFixed(2)}%)
+                                  </text>
+                                )}
+                              </>
+                            );
+                          })()}
                         </g>
                       </g>
                     )}
