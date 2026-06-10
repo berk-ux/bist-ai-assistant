@@ -360,7 +360,17 @@ app.get('/api/market/live/:symbol', async (req, res) => {
       res.json({
         symbol: symbol.toUpperCase(),
         price: (result.regularMarketPrice || 0).toFixed(2),
-        change: (result.regularMarketChangePercent || 0).toFixed(2)
+        change: (result.regularMarketChangePercent || 0).toFixed(2),
+        open: (result.regularMarketOpen || result.regularMarketPrice || 0).toFixed(2),
+        high: (result.regularMarketDayHigh || result.regularMarketPrice || 0).toFixed(2),
+        low: (result.regularMarketDayLow || result.regularMarketPrice || 0).toFixed(2),
+        volume: result.regularMarketVolume || 0,
+        marketCap: result.marketCap || 0,
+        pe: result.trailingPE || 0,
+        dividendYield: result.dividendYield || 0,
+        fiftyTwoWeekHigh: (result.fiftyTwoWeekHigh || 0).toFixed(2),
+        fiftyTwoWeekLow: (result.fiftyTwoWeekLow || 0).toFixed(2),
+        previousClose: (result.regularMarketPreviousClose || 0).toFixed(2)
       });
     } else {
       res.status(404).json({ error: 'Hisseye ait canlı veri bulunamadı.' });
