@@ -8,7 +8,7 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, initialData
   
   // Yeni Tarihsel Hesaplama State'leri
   const [buyDate, setBuyDate] = useState(new Date().toISOString().split('T')[0]);
-  const [inputType, setInputType] = useState('lot'); // 'lot' veya 'amount'
+  const [buyPrice, setBuyPrice] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [isFetchingHistorical, setIsFetchingHistorical] = useState(false);
   
@@ -21,51 +21,61 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, initialData
     }
   }, [isOpen, portfolio, initialData]);
 
+  // Hisse ve tarih değiştikçe otomatik tarihsel fiyat çekme
+  useEffect(() => {
+    if (!symbol || !buyDate) {
+      return;
+    }
+    setIsFetchingHistorical(true);
+    fetch(`/api/market/historical/${symbol}/${buyDate}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) {
+          setBuyPrice(data.price.toFixed(2));
+        } else {
+          setBuyPrice('');
+        }
+        setIsFetchingHistorical(false);
+      })
+      .catch(err => {
+        console.error("Tarihsel fiyat çekme hatası:", err);
+        setIsFetchingHistorical(false);
+      });
+  }, [symbol, buyDate]);
+
   if (!isOpen) return null;
 
-  const handleAdd = async () => {
-    if (!symbol || !buyDate || !inputValue) {
-      alert("Lütfen hisse kodu, tarih ve miktarı/tutarı girin.");
+  const handleAdd = () => {
+    if (!symbol || !buyDate || !inputValue || !buyPrice) {
+      alert("Lütfen hisse kodu, tarih, alış fiyatı ve miktarını girin.");
       return;
     }
 
-    setIsFetchingHistorical(true);
-    try {
-      const response = await fetch(`/api/market/historical/${symbol}/${buyDate}`);
-      const data = await response.json();
-      
-      if (data.error) {
-        alert("Girdiğiniz tarihe ait fiyat verisi bulunamadı. Lütfen hafta içi bir tarih seçin.");
-        setIsFetchingHistorical(false);
-        return;
-      }
+    const priceVal = parseFloat(buyPrice);
+    const qtyVal = parseFloat(inputValue);
 
-      const historicalPrice = data.price;
-      const inputVal = parseFloat(inputValue);
-      
-      let finalQuantity = 0;
-      if (inputType === 'lot') {
-        finalQuantity = inputVal;
-      } else {
-        finalQuantity = inputVal / historicalPrice;
-      }
-
-      const newItem = {
-        id: Date.now().toString(),
-        symbol: symbol.toUpperCase(),
-        buyPrice: historicalPrice,
-        quantity: finalQuantity,
-        buyDate: buyDate
-      };
-      
-      setLocalPortfolio([...localPortfolio, newItem]);
-      setSymbol('');
-      setInputValue('');
-    } catch (err) {
-      alert("Tarihsel fiyat çekilirken bir hata oluştu.");
-    } finally {
-      setIsFetchingHistorical(false);
+    if (isNaN(priceVal) || priceVal <= 0) {
+      alert("Lütfen geçerli bir alış fiyatı girin.");
+      return;
     }
+
+    if (isNaN(qtyVal) || qtyVal <= 0) {
+      alert("Lütfen geçerli bir miktar girin.");
+      return;
+    }
+
+    const newItem = {
+      id: Date.now().toString(),
+      symbol: symbol.toUpperCase(),
+      buyPrice: priceVal,
+      quantity: qtyVal,
+      buyDate: buyDate
+    };
+    
+    setLocalPortfolio([...localPortfolio, newItem]);
+    setSymbol('');
+    setInputValue('');
+    setBuyPrice('');
   };
 
   const handleRemove = (id) => {
@@ -86,7 +96,7 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, initialData
       zIndex: 9999
     }}>
       <div className="glass-panel" style={{
-        width: '500px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto',
+        width: '600px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto',
         padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem'
       }}>
         <div className="flex justify-between items-center">
@@ -96,8 +106,8 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, initialData
           </button>
         </div>
 
-        {/* Yeni Ekleme Formu (Tarih ve Akıllı Hesaplama Destekli) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1.5fr auto', gap: '0.8rem', alignItems: 'end' }}>
+        {/* Yeni Ekleme Formu (Alış Fiyatı Elle Giriş Destekli) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr auto', gap: '0.6rem', alignItems: 'end' }}>
           
           {/* 1. Hisse Kodu (Autocomplete) */}
           <div style={{ position: 'relative' }}>
@@ -149,23 +159,22 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, initialData
             />
           </div>
 
-          {/* 3. Giriş Tipi (Lot / Tutar) */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Giriş Tipi</label>
-            <select
-              value={inputType} onChange={e => setInputType(e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: '#fff', fontSize: '0.9rem', cursor: 'pointer' }}
-            >
-              <option value="lot">Lot (Adet)</option>
-              <option value="amount">Tutar (₺)</option>
-            </select>
-          </div>
-
-          {/* 4. Miktar Girişi */}
+          {/* 3. Alış Fiyatı (₺) */}
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
-              {inputType === 'lot' ? 'Kaç Lot Aldınız?' : 'Kaç TL Yatırdınız?'}
+              {isFetchingHistorical ? "Fiyat Çekiliyor..." : "Alış Fiyatı (₺)"}
             </label>
+            <input 
+              type="number" step="0.01"
+              value={buyPrice} onChange={e => setBuyPrice(e.target.value)}
+              placeholder="0.00"
+              style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: '#fff', fontSize: '0.9rem' }} 
+            />
+          </div>
+
+          {/* 4. Miktar (Lot) */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Miktar (Lot)</label>
             <input 
               type="number" step="0.01"
               value={inputValue} onChange={e => setInputValue(e.target.value)}
@@ -177,11 +186,10 @@ export default function PortfolioModal({ isOpen, onClose, portfolio, initialData
           {/* 5. Ekle Butonu */}
           <button 
             onClick={handleAdd} 
-            disabled={isFetchingHistorical}
             className="btn" 
-            style={{ padding: '0.6rem', background: 'var(--text-primary)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', cursor: isFetchingHistorical ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isFetchingHistorical ? 0.7 : 1 }}
+            style={{ padding: '0.6rem', background: 'var(--text-primary)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            {isFetchingHistorical ? <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>...</span> : <Plus size={20} />}
+            <Plus size={20} />
           </button>
         </div>
 
