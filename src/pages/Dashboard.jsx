@@ -842,27 +842,46 @@ export default function Dashboard({ activeTab }) {
                         <td style={{ padding: '0.5rem 1rem', width: '120px', height: '40px' }}>
                           <div style={{ width: '100px', height: '24px', display: 'flex', alignItems: 'center' }}>
                             <svg viewBox="0 0 100 30" style={{ width: '100%', height: '100%', overflow: 'visible' }} preserveAspectRatio="none">
+                              <defs>
+                                <filter id="glow-up" x="-20%" y="-20%" width="140%" height="140%">
+                                  <feGaussianBlur stdDeviation="1.2" result="blur" />
+                                  <feMerge>
+                                    <feMergeNode in="blur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                  </feMerge>
+                                </filter>
+                                <linearGradient id={`line-grad-up-${stock.symbol}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#00f2fe" />
+                                  <stop offset="100%" stopColor="#4facfe" />
+                                </linearGradient>
+                                <linearGradient id={`area-grad-up-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#00f2fe" stopOpacity="0.22" />
+                                  <stop offset="100%" stopColor="#00f2fe" stopOpacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id={`line-grad-down-${stock.symbol}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#ff0844" />
+                                  <stop offset="100%" stopColor="#ffb199" />
+                                </linearGradient>
+                                <linearGradient id={`area-grad-down-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#ff0844" stopOpacity="0.22" />
+                                  <stop offset="100%" stopColor="#ff0844" stopOpacity="0.0" />
+                                </linearGradient>
+                              </defs>
                               {isPositive ? (
                                 <>
-                                  <defs>
-                                    <linearGradient id={`grad-up-list-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                                      <stop offset="0%" stopColor="#30d158" stopOpacity="0.1" />
-                                      <stop offset="100%" stopColor="#30d158" stopOpacity="0.0" />
-                                    </linearGradient>
-                                  </defs>
-                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke="#30d158" strokeWidth="2" strokeLinecap="round" />
-                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5 L100,30 L0,30 Z" fill={`url(#grad-up-list-${stock.symbol})`} />
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5 L100,30 L0,30 Z" fill={`url(#area-grad-up-${stock.symbol})`} />
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke="#00f2fe" strokeWidth="3" opacity="0.25" filter="url(#glow-up)" strokeLinecap="round" />
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke={`url(#line-grad-up-${stock.symbol})`} strokeWidth="2" strokeLinecap="round" />
+                                  <circle cx="100" cy="5" r="2.5" fill="#ffffff" filter="url(#glow-up)" />
+                                  <circle cx="100" cy="5" r="1" fill="#00f2fe" />
                                 </>
                               ) : changeFloat < 0 ? (
                                 <>
-                                  <defs>
-                                    <linearGradient id={`grad-down-list-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                                      <stop offset="0%" stopColor="#ff453a" stopOpacity="0.1" />
-                                      <stop offset="100%" stopColor="#ff453a" stopOpacity="0.0" />
-                                    </linearGradient>
-                                  </defs>
-                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke="#ff453a" strokeWidth="2" strokeLinecap="round" />
-                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25 L100,30 L0,30 Z" fill={`url(#grad-down-list-${stock.symbol})`} />
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25 L100,30 L0,30 Z" fill={`url(#area-grad-down-${stock.symbol})`} />
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke="#ff0844" strokeWidth="3" opacity="0.25" filter="url(#glow-up)" strokeLinecap="round" />
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke={`url(#line-grad-down-${stock.symbol})`} strokeWidth="2" strokeLinecap="round" />
+                                  <circle cx="100" cy="25" r="2.5" fill="#ffffff" filter="url(#glow-up)" />
+                                  <circle cx="100" cy="25" r="1" fill="#ff0844" />
                                 </>
                               ) : (
                                 <path d="M0,15 L100,15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeDasharray="3,3" />
@@ -968,27 +987,46 @@ export default function Dashboard({ activeTab }) {
                         <td style={{ padding: '0.5rem 1rem', width: '120px', height: '40px' }}>
                           <div style={{ width: '100px', height: '24px', display: 'flex', alignItems: 'center' }}>
                             <svg viewBox="0 0 100 30" style={{ width: '100%', height: '100%', overflow: 'visible' }} preserveAspectRatio="none">
+                              <defs>
+                                <filter id="glow-up-other" x="-20%" y="-20%" width="140%" height="140%">
+                                  <feGaussianBlur stdDeviation="1.2" result="blur" />
+                                  <feMerge>
+                                    <feMergeNode in="blur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                  </feMerge>
+                                </filter>
+                                <linearGradient id={`line-grad-up-other-${stock.symbol}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#00f2fe" />
+                                  <stop offset="100%" stopColor="#4facfe" />
+                                </linearGradient>
+                                <linearGradient id={`area-grad-up-other-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#00f2fe" stopOpacity="0.22" />
+                                  <stop offset="100%" stopColor="#00f2fe" stopOpacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id={`line-grad-down-other-${stock.symbol}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#ff0844" />
+                                  <stop offset="100%" stopColor="#ffb199" />
+                                </linearGradient>
+                                <linearGradient id={`area-grad-down-other-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#ff0844" stopOpacity="0.22" />
+                                  <stop offset="100%" stopColor="#ff0844" stopOpacity="0.0" />
+                                </linearGradient>
+                              </defs>
                               {isPositive ? (
                                 <>
-                                  <defs>
-                                    <linearGradient id={`grad-up-other-list-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                                      <stop offset="0%" stopColor="#30d158" stopOpacity="0.1" />
-                                      <stop offset="100%" stopColor="#30d158" stopOpacity="0.0" />
-                                    </linearGradient>
-                                  </defs>
-                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke="#30d158" strokeWidth="2" strokeLinecap="round" />
-                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5 L100,30 L0,30 Z" fill={`url(#grad-up-other-list-${stock.symbol})`} />
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5 L100,30 L0,30 Z" fill={`url(#area-grad-up-other-${stock.symbol})`} />
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke="#00f2fe" strokeWidth="3" opacity="0.25" filter="url(#glow-up-other)" strokeLinecap="round" />
+                                  <path d="M0,22 C20,18 40,24 60,10 C80,3 90,8 100,5" fill="none" stroke={`url(#line-grad-up-other-${stock.symbol})`} strokeWidth="2" strokeLinecap="round" />
+                                  <circle cx="100" cy="5" r="2.5" fill="#ffffff" filter="url(#glow-up-other)" />
+                                  <circle cx="100" cy="5" r="1" fill="#00f2fe" />
                                 </>
                               ) : changeFloat < 0 ? (
                                 <>
-                                  <defs>
-                                    <linearGradient id={`grad-down-other-list-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                                      <stop offset="0%" stopColor="#ff453a" stopOpacity="0.1" />
-                                      <stop offset="100%" stopColor="#ff453a" stopOpacity="0.0" />
-                                    </linearGradient>
-                                  </defs>
-                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke="#ff453a" strokeWidth="2" strokeLinecap="round" />
-                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25 L100,30 L0,30 Z" fill={`url(#grad-down-other-list-${stock.symbol})`} />
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25 L100,30 L0,30 Z" fill={`url(#area-grad-down-other-${stock.symbol})`} />
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke="#ff0844" strokeWidth="3" opacity="0.25" filter="url(#glow-up-other)" strokeLinecap="round" />
+                                  <path d="M0,8 C20,14 40,8 60,20 C80,26 90,22 100,25" fill="none" stroke={`url(#line-grad-down-other-${stock.symbol})`} strokeWidth="2" strokeLinecap="round" />
+                                  <circle cx="100" cy="25" r="2.5" fill="#ffffff" filter="url(#glow-up-other)" />
+                                  <circle cx="100" cy="25" r="1" fill="#ff0844" />
                                 </>
                               ) : (
                                 <path d="M0,15 L100,15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeDasharray="3,3" />
