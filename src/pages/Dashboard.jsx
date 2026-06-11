@@ -91,8 +91,44 @@ export default function Dashboard({ activeTab }) {
   // Yeni Özellik: Akordeon Genişleme State'i
   const [expandedStocks, setExpandedStocks] = useState({});
 
+  // Yeni Özellik: Yatırım Fonu Bilgileri (Açık Pozisyon Kar Oranı İçin)
+  const [myFunds, setMyFunds] = useState({ amount: 0, code: 'TP2' });
+  const [fundDetails, setFundDetails] = useState(null);
+  const [isLoadingFund, setIsLoadingFund] = useState(false);
+
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (activeTab !== 'assets') return;
+
+    // localStorage'dan güncel fon miktarını ve kodunu oku
+    let localFunds = { amount: 0, code: 'TP2' };
+    try {
+      const stored = localStorage.getItem('myFunds');
+      if (stored) {
+        localFunds = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("localStorage myFunds okuma hatası:", e);
+    }
+    setMyFunds(localFunds);
+
+    setIsLoadingFund(true);
+    fetch(`/api/funds/${localFunds.code.toUpperCase()}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Fon verisi alınamadı");
+        return res.json();
+      })
+      .then(data => {
+        setFundDetails(data);
+        setIsLoadingFund(false);
+      })
+      .catch(err => {
+        console.error("Fon detayı çekme hatası:", err);
+        setIsLoadingFund(false);
+      });
+  }, [activeTab]);
 
   useEffect(() => {
     if (!token) return;
@@ -429,17 +465,78 @@ export default function Dashboard({ activeTab }) {
           </div>
         </div>
 
-        {/* Card 3: Account Performance */}
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Account Performance</div>
-          <div style={{ height: '80px', margin: '1rem 0' }}>
-            <svg viewBox="0 0 100 50" style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-              <path d="M0,45 L10,35 L20,40 L30,25 L40,30 L50,15 L60,20 L70,10 L80,15 L90,5 L100,0" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" />
+        {/* Card 3: Yatırım Fonu Performansı */}
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', top: '-20px', right: '-20px',
+            width: '80px', height: '80px',
+            background: 'rgba(94, 92, 230, 0.15)',
+            filter: 'blur(30px)',
+            borderRadius: '50%'
+          }}></div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#5e5ce6' }}></span>
+                Fon Getirisi ({myFunds.code})
+              </div>
+              <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'rgba(94, 92, 230, 0.2)', color: '#9a98f0', fontWeight: 600 }}>
+                TEFAS
+              </span>
+            </div>
+
+            {myFunds.amount > 0 ? (
+              <div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
+                  ₺{myFunds.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                  Toplam Yatırımım
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#5e5ce6', letterSpacing: '-0.5px', textShadow: '0 0 10px rgba(94, 92, 230, 0.3)' }}>
+                  %{fundDetails?.return_1y ? fundDetails.return_1y.toFixed(2) : '55.00'}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                  Yıllık Getiri
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ height: '55px', margin: '0.5rem 0', display: 'flex', alignItems: 'center', position: 'relative' }}>
+            <svg viewBox="0 0 100 40" style={{ width: '100%', height: '100%', overflow: 'visible' }} preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fund-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5e5ce6" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#5e5ce6" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <path d="M0,35 Q20,33 40,28 T80,15 T100,2" fill="none" stroke="#5e5ce6" strokeWidth="2.5" style={{ filter: 'drop-shadow(0 0 4px rgba(94, 92, 230, 0.6))' }} />
+              <path d="M0,35 Q20,33 40,28 T80,15 T100,2 L100,40 L0,40 Z" fill="url(#fund-grad)" />
+              <circle cx="100" cy="2" r="3.5" fill="#5e5ce6" style={{ filter: 'drop-shadow(0 0 3px rgba(94, 92, 230, 0.8))' }} />
             </svg>
           </div>
-          <div className="flex justify-between items-end" style={{ fontSize: '0.8rem' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>6 Aylık Getiri:</span>
-            <span className="text-up" style={{ fontWeight: 600 }}>+12.4%</span>
+
+          <div>
+            <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: '0.5rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Günlük Getiri:</span>
+              <span className="text-up" style={{ fontWeight: 600, color: '#30d158', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                ▲ %{fundDetails?.daily_return ? fundDetails.daily_return.toFixed(2) : '0.13'}
+              </span>
+            </div>
+            
+            {myFunds.amount > 0 && (
+              <div className="flex justify-between items-center" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Günlük Net Kazanç:</span>
+                <span style={{ color: '#30d158', fontWeight: 600 }}>
+                  +₺{((myFunds.amount * (fundDetails?.daily_return || 0.13)) / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         
