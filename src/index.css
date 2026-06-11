@@ -451,3 +451,15 @@ input::placeholder, textarea::placeholder {
   color: #8e8e93;
   border-color: rgba(255, 255, 255, 0.08);
 }
+
+/* Market List Row Hover Effects */
+tr.market-list-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: background-color var(--transition-fast) ease;
+}
+
+tr.market-list-row:hover {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
